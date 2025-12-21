@@ -91,6 +91,19 @@
           }
         }
       },
+      "2d-physix-engine/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "dependencies": {
+          "FSharp.Core": "9.0.303"
+        },
+        "compile": {
+          "bin/placeholder/2d-physix-engine.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/2d-physix-engine.dll": {}
+        }
+      },
       "GameEngine/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
@@ -172,14 +185,20 @@
         "runtimes/win-x86/native/raylib.dll"
       ]
     },
+    "2d-physix-engine/1.0.0": {
+      "type": "project",
+      "path": "../2d-physix-engine/2d-physix-engine.fsproj",
+      "msbuildProject": "../2d-physix-engine/2d-physix-engine.fsproj"
+    },
     "GameEngine/1.0.0": {
       "type": "project",
-      "path": "../2d-graphics-engine/GameEngine/GameEngine.fsproj",
-      "msbuildProject": "../2d-graphics-engine/GameEngine/GameEngine.fsproj"
+      "path": "../2d-graphics-engine/GameEngine.fsproj",
+      "msbuildProject": "../2d-graphics-engine/GameEngine.fsproj"
     }
   },
   "projectFileDependencyGroups": {
     "net9.0": [
+      "2d-physix-engine >= 1.0.0",
       "FSharp.Core >= 9.0.303",
       "GameEngine >= 1.0.0"
     ]
@@ -190,11 +209,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\pavel\\Documents\\учеба\\шарпы\\Hollow game\\Hollow-game\\Hollow-Game\\Hollow-Game.fsproj",
+      "projectUniqueName": "C:\\Users\\pavel\\Documents\\учеба\\шарпы\\HollowGame\\Hollow-Game\\Hollow-Game.fsproj",
       "projectName": "Hollow-Game",
-      "projectPath": "C:\\Users\\pavel\\Documents\\учеба\\шарпы\\Hollow game\\Hollow-game\\Hollow-Game\\Hollow-Game.fsproj",
+      "projectPath": "C:\\Users\\pavel\\Documents\\учеба\\шарпы\\HollowGame\\Hollow-Game\\Hollow-Game.fsproj",
       "packagesPath": "C:\\Users\\pavel\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\pavel\\Documents\\учеба\\шарпы\\Hollow game\\Hollow-game\\Hollow-Game\\obj\\",
+      "outputPath": "C:\\Users\\pavel\\Documents\\учеба\\шарпы\\HollowGame\\Hollow-Game\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\pavel\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -210,8 +229,11 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "projectReferences": {
-            "C:\\Users\\pavel\\Documents\\учеба\\шарпы\\Hollow game\\Hollow-game\\2d-graphics-engine\\GameEngine\\GameEngine.fsproj": {
-              "projectPath": "C:\\Users\\pavel\\Documents\\учеба\\шарпы\\Hollow game\\Hollow-game\\2d-graphics-engine\\GameEngine\\GameEngine.fsproj"
+            "C:\\Users\\pavel\\Documents\\учеба\\шарпы\\HollowGame\\2d-graphics-engine\\GameEngine.fsproj": {
+              "projectPath": "C:\\Users\\pavel\\Documents\\учеба\\шарпы\\HollowGame\\2d-graphics-engine\\GameEngine.fsproj"
+            },
+            "C:\\Users\\pavel\\Documents\\учеба\\шарпы\\HollowGame\\2d-physix-engine\\2d-physix-engine.fsproj": {
+              "projectPath": "C:\\Users\\pavel\\Documents\\учеба\\шарпы\\HollowGame\\2d-physix-engine\\2d-physix-engine.fsproj"
             }
           }
         }

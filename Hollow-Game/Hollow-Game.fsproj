@@ -7,12 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+      <Compile Include="Mainloop.fs" />
     <Compile Include="Program.fs" />
+
   </ItemGroup>
 
   <ItemGroup>
     <!-- Ссылка на подмодуль -->
-    <ProjectReference Include="..\2d-graphics-engine\GameEngine\GameEngine.fsproj" />
+    <ProjectReference Include="..\2d-graphics-engine\GameEngine.fsproj" />
         <ProjectReference Include="..\2d-physix-engine\2d-physix-engine.fsproj" />
   </ItemGroup>
 </Project>
