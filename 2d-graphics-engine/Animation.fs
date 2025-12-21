@@ -168,6 +168,27 @@ let rec addPointToGraphicObjectPoint (graphicObject: GraphicObject) (point: Poin
         MaskedGraphicObject
             {| masked with
                 Object = addPointToGraphicObjectPoint masked.Object point |}
+                
+let rec setPointToGraphicObjectPoint (graphicObject: GraphicObject) (point: Point) =
+    match graphicObject with
+    | DrawableObject obj ->
+        DrawableObject
+            { obj with
+                Point = point }
+    | TextObject text -> TextObject {text with Point = point }
+    | RelativeGraphicObject obj ->
+        RelativeGraphicObject
+            {| obj with
+                RelatePoint = point |}
+
+    | Scope scope ->
+        Scope
+            {| scope with
+                Point = point |}
+    | MaskedGraphicObject masked ->
+        MaskedGraphicObject
+            {| masked with
+                Object = setPointToGraphicObjectPoint masked.Object point |}
 
 let isVisible (graphicObject: GraphicObject) (camera: Camera) =
     let { X = objectX; Y = objectY; Z = objectZ } = getPointOfGraphicObject graphicObject
