@@ -1,0 +1,5 @@
+C:\Users\pavel\Documents\учеба\шарпы\Hollow game\Hollow-game\Hollow-Game\obj\Debug\net9.0\Hollow-Game.fsproj.AssemblyReference.cache
+C:\Users\pavel\Documents\учеба\шарпы\Hollow game\Hollow-game\Hollow-Game\obj\Debug\net9.0\Hollow-Game.AssemblyInfoInputs.cache
+C:\Users\pavel\Documents\учеба\шарпы\Hollow game\Hollow-game\Hollow-Game\obj\Debug\net9.0\Hollow-Game.AssemblyInfo.fs
+C:\Users\pavel\Documents\учеба\шарпы\Hollow game\Hollow-game\Hollow-Game\obj\Debug\net9.0\Hollow-Game.fsproj.CoreCompileInputs.cache
+C:\Users\pavel\Documents\учеба\шарпы\Hollow game\Hollow-game\Hollow-Game\obj\Debug\net9.0\Hollow-Game.sourcelink.json
