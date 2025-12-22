@@ -5,111 +5,54 @@ open Animation
 open Camera
 open MainLoop
 open PhysicsEngine
+open GameState
+open GameObjectLoader
 
 
-[<EntryPoint>]
-let main argv =
-    Raylib.InitWindow(1500, 1000, "F# Sprite Animation")
-    Raylib.SetTargetFPS(60)
-    
-    // Загрузка анимации (замените пути на реальные файлы)
+let loadAnimation = 
     let animation = 
         [| "resources/2.png";  |]
         |> fun frames -> loadAnimation frames 10
+    Map.add "Attack" animation Map.empty
+
+let toBool (x: CBool) : bool = x = CBool.op_Implicit true
+
     
-    let map = Map.add "Attack" animation Map.empty
-    let color = newColor 255uy 255uy 255uy 255uy
-    let mutable sprite1 = DrawableObject {
-        Point = {
-            X = 0
-            Y = 0
-            Z = 0f
-        }
-        Layer = 0
-        W = 400
-        H = 300
-        Animations = map
-        Color = color
-        CurrentAnimationName = "Attack"
-    }
-    let mutable sprite2 = DrawableObject {
-        Point = {
-            X = 0
-            Y = 0
-            Z = 0f
-        }
-        Layer = 0
-        W = 400
-        H = 300
-        Animations = map
-        Color = color
-        CurrentAnimationName = "Attack"
-    }
-    let mutable platform = {
-        id = 1
-        bodyType = Static
-        pos = v2 400.0 360.0
-        speed = v2 0.0 0.0
-        acc = v2 0.0 0.0
-        state = InAir
-        colliders =
-            [
-                {
-                    Offset = v2 0.0 0.0
-                    Size = v2 400.0 300.0
-                    Kind = Solid
-                    Response = Block
-                    Name = "Ground"
-                }
-            ]
-    }
-    let mutable body = {
-        id = 2
-        bodyType = Dynamic
-        pos = v2 0.0 0.0
-        speed = v2 1.0 0.0
-        acc = v2 1.0 0.0
-        state = InAir
-        colliders =
-            [
-                {
-                    Offset = v2 0.0 0.0
-                    Size = v2 400.0 300.0
-                    Kind = Solid
-                    Response = Block
-                    Name = "Player"
-                }
-            ]
-    }
-    let obj1 = {
-        GraphicObject = sprite1
-        PhysicalObject = platform
-    }
-    let obj2 = {
-        GraphicObject = sprite2
-        PhysicalObject = body
-    }
+let rec doFrame objects camera fpsCount =
+    Raylib.BeginDrawing()
+    Raylib.ClearBackground Raylib_cs.Color.White
+    
+    //drawGraphicObject sprite camera
+    let bodies = nextFrame objects (1.0/fpsCount) camera
+    Raylib.DrawText("Sprite Animation Demo", 10, 10, 20, Color.Black)
+    
+    Raylib.EndDrawing()
+    // match toBool (Raylib.WindowShouldClose()) with
+    // | false -> doFrame bodies camera fpsCount
+    // | _ -> ()
+
+let rec menuLoop camera = ()
+
+
+let rec doGameLoop gameMode camera objects fpsCount =
+    if toBool (Raylib.WindowShouldClose()) then
+        ()
+    else
+        doFrame objects camera fpsCount
+        
+[<EntryPoint>]
+let main argv =
+    let fpsCount = 60.0
+    Raylib.InitWindow(1500, 1000, "Hollow Game")
+    Raylib.SetTargetFPS (int fpsCount)
+    
+    // Загрузка анимации (замените пути на реальные файлы)
+    let map = loadAnimation
     let camera = newMovableDepthCamera 0 0 1500 1000 0.001f 0.001f 0.0f 0.0f
-    //while not (Raylib.WindowShouldClose()) do
-    let rec doFrame objects =
-        // Обновление
-        // sprite <- addPointToGraphicObjectPoint (updateGraphicObjectAnimation sprite) { X = 1; Y = 1; Z = 0.0f  } 
 
-        Raylib.BeginDrawing()
-        Raylib.ClearBackground Raylib_cs.Color.White
-        
-        //drawGraphicObject sprite camera
-        let bodies = nextFrame objects (1.0/60.0) camera
-
-
-
-        Raylib.DrawText("Sprite Animation Demo", 10, 10, 20, Color.Black)
-        
-        Raylib.EndDrawing()
-        doFrame bodies
     
-    doFrame [obj1; obj2]
-    // Очистка
-    //sprite.Animations.toArray |> Array.forall(fun el ->) |> Array.iter Raylib.UnloadTexture
+
+    
+    doFrame (LoadGameObjects map) camera fpsCount
     Raylib.CloseWindow()
     0

@@ -1,0 +1,4 @@
+type Button {
+    Image: GraphicObject;
+    
+}
