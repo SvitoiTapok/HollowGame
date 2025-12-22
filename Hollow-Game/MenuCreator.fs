@@ -16,7 +16,7 @@ let makeMenuButtons () =
         {
             Bounds = { 
                 Point = {
-                    X = 200
+                    X = 700
                     Y = 100
                     Z = 0f
                 }
@@ -32,7 +32,7 @@ let makeMenuButtons () =
         {
             Bounds = { 
                 Point = {
-                    X = 200
+                    X = 700
                     Y = 500
                     Z = 0f
                 }
@@ -45,5 +45,6 @@ let makeMenuButtons () =
             }
             ButtonType = Exit
         }
+
 
     ]

@@ -24,7 +24,7 @@ let handleTransition currentState buttons event =
         | Some item ->
             match item.ButtonType with
             | StartGame -> 
-                MainLoop
+                LoadMainLoop
             | Exit ->
                 currentState
         | None -> currentState

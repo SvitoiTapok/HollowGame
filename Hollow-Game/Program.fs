@@ -21,7 +21,47 @@ let loadBaseAnimation () =
 
 let toBool (x: CBool) : bool = x = CBool.op_Implicit true
 
-    
+let downloadBackground () =
+    let back = 
+        [| "resources/background.png";  |]
+        |> fun frames -> loadAnimation frames 1
+    let background = Map.add "background" back Map.empty
+    let color = newColor 255uy 255uy 255uy 255uy
+    let graphBack = { 
+                Point = {
+                    X = 0
+                    Y = 0
+                    Z = 4f
+                }
+                Layer = 4
+                W = 8000
+                H = 6000
+                Animations = background
+                Color = color
+                CurrentAnimationName = "background"
+            }
+    {
+        GraphicObject = DrawableObject graphBack
+        PhysicalObject = {
+            id = 2
+            name = "background"
+            bodyType = Static
+            pos = v2 0 0
+            speed = v2 0.0 0.0
+            acc = v2 0.0 0.0
+            state = InAir
+            colliders =
+                [
+                    {
+                        Offset = v2 0.0 0.0
+                        Size = v2 100.0 100.0
+                        Kind = Solid
+                        Response = Ignore
+                        Name = "Ground"
+                    }
+                ]
+        }   
+    }
 
 
 
@@ -56,7 +96,7 @@ let rec doFrame gameState =
     
     //drawGraphicObject sprite camera
     let bodies = nextFrame gameState.GameObjects (1.0/float gameState.FpsCount) gameState.Camera
-
+    printfn "%A" gameState
     let player = Option.get (List.tryFind (fun x -> x.PhysicalObject.name = "Player") bodies)
     let character = {
         IsWalkingLeft = false
@@ -76,13 +116,21 @@ let rec doFrame gameState =
 
 let setUpMenu gameState = 
     //printfn "%A" gameState
-    drawAllVisibleObjects (gameState.Buttons |> List.map (fun x -> DrawableObject x.Bounds) |> List.toArray) gameState.Camera
+    let buttonsGraph = gameState.Buttons |> List.map (fun x -> DrawableObject x.Bounds)
+    let background = gameState.GameObjects |> List.map (fun x -> x.GraphicObject)
+
+    drawAllVisibleObjects ( List.concat [buttonsGraph; background]|> List.toArray) gameState.Camera
     let states = gameState.InputHandler.CollectEvents() |> List.map(fun x -> handleTransition gameState.GameMode gameState.Buttons x) |> List.filter(fun x -> not (x = gameState.GameMode))
     let state = if states |> List.length=1 then states |> List.head else gameState.GameMode
 
 
     {gameState with GameMode = state}
 
+let loadMainLoop gameState = 
+    { gameState with 
+        GameObjects = LoadGameObjects (loadBaseAnimation ()) gameState.GameObjects
+        GameMode = MainLoop 
+    }
 
 let rec doGameLoop gameState =
     if toBool (Raylib.WindowShouldClose()) then
@@ -91,6 +139,7 @@ let rec doGameLoop gameState =
         let newGameState =
          match gameState.GameMode with
             | Menu -> setUpMenu gameState
+            | LoadMainLoop -> loadMainLoop gameState
             | MainLoop -> {gameState with GameObjects= doFrame gameState}
             | _ -> gameState
         doGameLoop newGameState
@@ -106,6 +155,7 @@ let main argv =
     let map = loadBaseAnimation ()
     let camera = newMovableDepthCamera 0 0 1500 1000 0.001f 0.001f 1000f 0.0f
 
+    
 
     let buttons = makeMenuButtons ()
     let gameState = {
@@ -113,7 +163,7 @@ let main argv =
         FpsCount = int fpsCount;
         Buttons = buttons
         Camera = camera
-        GameObjects = LoadGameObjects map
+        GameObjects = [downloadBackground ()]
         InputHandler = InputHandler
     }
     

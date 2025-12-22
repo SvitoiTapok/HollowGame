@@ -11,7 +11,7 @@ let makeGameObject physObj graphObj =
     }
 
 
-let LoadGameObjects animationMap = 
+let LoadGameObjects animationMap gameObjects = 
     let color = newColor 255uy 255uy 255uy 255uy
     let sprite1 = DrawableObject {
         Point = {
@@ -40,7 +40,7 @@ let LoadGameObjects animationMap =
         CurrentAnimationName = "Attack"
     }
     let platform: PhysicsBody = {
-        id = 2
+        id = 3
         name = "Ground"
         bodyType = Static
         pos = v2 100.0 360.0
@@ -79,4 +79,4 @@ let LoadGameObjects animationMap =
     }
     let obj1 = makeGameObject sprite1 platform
     let obj2 = makeGameObject sprite2 body
-    [obj1; obj2]
+    List.concat [gameObjects;[obj1; obj2]]

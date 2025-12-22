@@ -9,6 +9,7 @@ type GameMode =
     | MainLoop
     | DeathScene
     | SelectionMode
+    | LoadMainLoop
 
 type GameState = {
     GameMode: GameMode
