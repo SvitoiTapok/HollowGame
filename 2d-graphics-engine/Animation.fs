@@ -191,16 +191,17 @@ let rec setPointToGraphicObjectPoint (graphicObject: GraphicObject) (point: Poin
                 Object = setPointToGraphicObjectPoint masked.Object point |}
 
 let isVisible (graphicObject: GraphicObject) (camera: Camera) =
-    let { X = objectX; Y = objectY; Z = objectZ } = getPointOfGraphicObject graphicObject
-    let objectWidth, objectHeigth = getSizesOfGraphicObject graphicObject
-    let inCameraX = int (objectX - camera.X) + (camera.W / 2 - objectWidth / 2)
-    let inCameraY = int (objectY - camera.Y) + (camera.H / 2 - objectHeigth / 2)
+    true
+    // let { X = objectX; Y = objectY; Z = objectZ } = getPointOfGraphicObject graphicObject
+    // let objectWidth, objectHeigth = getSizesOfGraphicObject graphicObject
+    // let inCameraX = int (objectX - camera.X) + (camera.W / 2 - objectWidth / 2)
+    // let inCameraY = int (objectY - camera.Y) + (camera.H / 2 - objectHeigth / 2)
 
-    camera.ZNear <= objectZ && objectZ <= camera.ZFar
-    && 0 <= inCameraX + objectWidth
-    && inCameraX - objectWidth <= camera.W
-    && 0 <= inCameraY + objectHeigth
-    && inCameraY - objectHeigth <= camera.H
+    // camera.ZNear <= objectZ && objectZ <= camera.ZFar
+    // && 0 <= inCameraX + objectWidth
+    // && inCameraX - objectWidth <= camera.W
+    // && 0 <= inCameraY + objectHeigth
+    // && inCameraY - objectHeigth <= camera.H
 
 let calculateParalaxFactor (graphicObject: GraphicObject) = 
     let { X = objectX; Y = objectY; Z = objectZ } = getPointOfGraphicObject graphicObject
@@ -286,9 +287,10 @@ let loadAnimation (framePaths: string[]) frameSpeed =
       FrameSpeed = frameSpeed }
 
 let updateAnimation (animation: Animation) =
+    
     if animation.Frames.Length > 1 then
         let newCounter = animation.FrameCounter + 1
-
+        
         if newCounter >= animation.FrameSpeed then
             let nextFrame = (animation.CurrentFrame + 1) % animation.Frames.Length
 
@@ -429,11 +431,14 @@ let drawOnlyVisibleGraphicObject (graphicObject: GraphicObject) (camera: Camera)
         drawGraphicObject graphicObject camera 
 
 let drawAll (objects: GraphicObject[]) (camera: Camera) =
+    Raylib.BeginDrawing()
+    Raylib.ClearBackground Raylib_cs.Color.White
     objects
     |> Array.sortBy (fun obj ->
         let point = getPointOfGraphicObject obj
         -(getLevel obj), -point.Z)
     |> Array.iter (fun obj -> drawGraphicObject obj camera)
+    Raylib.EndDrawing()
 
 let drawAllVisibleObjects (objects: GraphicObject[]) (camera: Camera) =
     Raylib.BeginDrawing()

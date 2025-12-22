@@ -2,7 +2,6 @@
 open Raylib_cs
 open System.Numerics
 open Animation
-open Camera
 open MainLoop
 open PhysicsEngine
 open GameState
@@ -27,43 +26,39 @@ let downloadBackground () =
         |> fun frames -> loadAnimation frames 1
     let background = Map.add "background" back Map.empty
     let color = newColor 255uy 255uy 255uy 255uy
-    let graphBack = { 
-                Point = {
-                    X = 0
-                    Y = 0
-                    Z = 4f
-                }
-                Layer = 4
-                W = 8000
-                H = 6000
-                Animations = background
-                Color = color
-                CurrentAnimationName = "background"
+    let point = newPoint 0 0 4.0f
+    let coliders=   [
+            {
+                Offset = v2 0.0 0.0
+                Size = v2 100.0 100.0
+                Kind = Solid
+                Response = Ignore
+                Name = "Ground"
             }
-    {
-        GraphicObject = DrawableObject graphBack
-        PhysicalObject = {
-            id = 2
-            name = "background"
-            bodyType = Static
-            pos = v2 0 0
-            speed = v2 0.0 0.0
-            acc = v2 0.0 0.0
-            state = InAir
-            colliders =
-                [
-                    {
-                        Offset = v2 0.0 0.0
-                        Size = v2 100.0 100.0
-                        Kind = Solid
-                        Response = Ignore
-                        Name = "Ground"
-                    }
-                ]
-        }   
+        ]
+    makeGameObject point 4 8000 6000 background color "background" 2 "background" Static (v2 0.0 0.0) (v2 0.0 0.0) (v2 0.0 0.0) InAir coliders
+
+let followingCamera (camera: Camera) (gameObject: GameObject) dSpeed = 
+    let EPSILON = single 1e-2
+    let point = getPointOfGraphicObject gameObject.GraphicObject
+    let w, h = getSizesOfGraphicObject gameObject.GraphicObject
+
+    let targetX = single point.X - single camera.W / 2.0f + single w / 2.0f
+    let targetY = single point.Y - single camera.H / 2.0f + single h / 2.0f
+
+    let newX = single camera.X + (targetX - single camera.X) * camera.Speed
+    let newY = single camera.Y + (targetY - single camera.Y) * camera.Speed
+
+    let isCame = abs (newX - targetX) < EPSILON && abs (newY - targetY) < EPSILON
+
+    let newCamera = { 
+        camera with 
+            X = int newX
+            Y = int newY
+            Speed = if isCame then camera.initialSpeed else camera.Speed + dSpeed
     }
 
-
+    newCamera
 
 let handleEvents character Ilist =
     List.fold (fun acc item -> 
@@ -87,7 +82,6 @@ let makePlayerJump  character player =
     if character.IsJumping && not character.IsInAir then {player with speed={X = player.speed.X; Y = -1000}}
     else player
 let makePlayerMove player character= 
-    printfn "%A" character.IsWalkingRight
     makePlayerWalkRight character player |> makePlayerWalkLeft character |> makePlayerJump character
 
     
@@ -96,7 +90,6 @@ let rec doFrame gameState =
     
     //drawGraphicObject sprite camera
     let bodies = nextFrame gameState.GameObjects (1.0/float gameState.FpsCount) gameState.Camera
-    printfn "%A" gameState
     let player = Option.get (List.tryFind (fun x -> x.PhysicalObject.name = "Player") bodies)
     let character = {
         IsWalkingLeft = false
@@ -106,7 +99,8 @@ let rec doFrame gameState =
     }
     let newCharacter = gameState.InputHandler.CollectEvents() |> handleEvents character
     let newPlayer = makePlayerMove player.PhysicalObject newCharacter
-    bodies |> List.map(fun x -> if x.PhysicalObject.name="Player" then {x with PhysicalObject=newPlayer} else x)
+    let camera = followingCamera gameState.Camera player 0.0001f
+    {gameState with GameObjects = bodies |> List.map(fun x -> if x.PhysicalObject.name="Player" then {x with PhysicalObject=newPlayer} else x); Camera = camera}
 
 
     //Raylib.DrawText("Sprite Animation Demo", 10, 10, 20, Color.Black)
@@ -127,6 +121,7 @@ let setUpMenu gameState =
     {gameState with GameMode = state}
 
 let loadMainLoop gameState = 
+    
     { gameState with 
         GameObjects = LoadGameObjects (loadBaseAnimation ()) gameState.GameObjects
         GameMode = MainLoop 
@@ -140,7 +135,7 @@ let rec doGameLoop gameState =
          match gameState.GameMode with
             | Menu -> setUpMenu gameState
             | LoadMainLoop -> loadMainLoop gameState
-            | MainLoop -> {gameState with GameObjects= doFrame gameState}
+            | MainLoop -> doFrame gameState
             | _ -> gameState
         doGameLoop newGameState
         

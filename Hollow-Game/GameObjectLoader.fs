@@ -4,14 +4,60 @@ open Animation
 open PhysicsEngine
 open MainLoop
 
-let makeGameObject physObj graphObj = 
+let makeGameObjectSimple physObj graphObj = 
     {
         GraphicObject = physObj
         PhysicalObject = graphObj
     }
 
 
+let makeGameObject point layer w h animations color currentAnimationName id name bodyType pos speed acc state coliders =
+    {
+        GraphicObject = DrawableObject {
+            Point = point
+            Layer = layer
+            W = w
+            H = h
+            Animations = animations
+            Color = color
+            CurrentAnimationName = currentAnimationName
+        }
+        PhysicalObject = {
+            id = id
+            name = name
+            bodyType = bodyType
+            pos = pos
+            speed = speed
+            acc = acc
+            state = state
+            colliders = coliders
+        }
+    }
+
+
+let makeWall (point: Point) w h animation id name=
+    let color = newColor 255uy 255uy 255uy 255uy
+    let pos = v2 point.X point.Y
+    let coliders=   [
+            {
+                Offset = v2 0.0 0.0
+                Size = v2 (float w) (float h)
+                Kind = Solid
+                Response = Block
+                Name = "Wall"
+            }
+        ]
+    makeGameObject point 0 w h (Map.add "default" animation Map.empty) color "default" id name Static pos (v2 0.0 0.0) (v2 0.0 0.0) InAir coliders
+    
+
+
 let LoadGameObjects animationMap gameObjects = 
+    let playerRunAnim  = [| "resources/green_run_1.png"; "resources/green_run_2.png"|] |> fun frames -> loadAnimation frames 10
+    let playerStandingAnim = [| "resources/green_standing.png"; |] |> fun frames -> loadAnimation frames 1
+    let playerAnnimationMap = 
+        Map.empty
+        |> Map.add "Run" playerRunAnim
+        |> Map.add "Standing" playerStandingAnim
     let color = newColor 255uy 255uy 255uy 255uy
     let sprite1 = DrawableObject {
         Point = {
@@ -35,9 +81,9 @@ let LoadGameObjects animationMap gameObjects =
         Layer = 0
         W = 400
         H = 300
-        Animations = animationMap
+        Animations = playerAnnimationMap
         Color = color
-        CurrentAnimationName = "Attack"
+        CurrentAnimationName = "Run"
     }
     let platform: PhysicsBody = {
         id = 3
@@ -77,6 +123,14 @@ let LoadGameObjects animationMap gameObjects =
                 }
             ]
     }
-    let obj1 = makeGameObject sprite1 platform
-    let obj2 = makeGameObject sprite2 body
-    List.concat [gameObjects;[obj1; obj2]]
+    let animation: Animation = [| "resources/ground_floor.png"; |] |> fun frames -> loadAnimation frames 1
+    printfn "Creating ground objects"
+    let groundList = List.init 100 (fun i ->
+        makeWall (newPoint (64 * i) (900-64) 0.0f) 64 64 animation (i + 10) "Wall"
+    )  
+    
+    printfn "%b" (isVisible groundList.[10].GraphicObject (newMovableDepthCamera 0 0 1500 1000 0.001f 0.001f 1000f 0.0f))
+    let obj1 = makeGameObjectSimple sprite1 platform
+    let obj2 = makeGameObjectSimple sprite2 body
+    //printfn "%A" (List.concat [gameObjects;[obj1; obj2]; groundList])
+    List.concat [gameObjects;[obj1; obj2]; groundList]
