@@ -19,7 +19,7 @@ let handleTransition currentState buttons event =
         let clickedItem = 
             buttons
             |> List.tryFind (fun item -> toBool (Raylib.CheckCollisionPointRec(Vector2(float32 x, float32 y), menuButtonToRect item)))
-        printfn "%A" clickedItem
+        //printfn "%A" clickedItem
         match clickedItem with
         | Some item ->
             match item.ButtonType with

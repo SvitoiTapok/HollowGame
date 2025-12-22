@@ -10,6 +10,12 @@ type InputEvent =
     | SpacePressed
     | EnterPressed
 
+type Character = {
+    IsWalkingLeft: bool
+    IsWalkingRight: bool
+    IsInAir: bool
+    IsJumping: bool
+}
 let toBool (x: CBool) : bool = x = CBool.op_Implicit true
 
 type InputHandler() =
@@ -38,7 +44,7 @@ type InputHandler() =
         if toBool (Raylib.IsKeyPressed(KeyboardKey.Enter)) then
             events.Add(EnterPressed)
         for key in [KeyboardKey.W; KeyboardKey.A; KeyboardKey.S; KeyboardKey.D] do
-            if toBool (Raylib.IsKeyPressed(key)) then
+            if toBool (Raylib.IsKeyDown(key)) then
                 events.Add(KeyPress key)
         //printfn "%A" events
         events |> List.ofSeq

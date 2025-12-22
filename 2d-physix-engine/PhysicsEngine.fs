@@ -66,6 +66,7 @@ type Rect =
 type PhysicsBody =
     {
         id: int
+        name: string
         bodyType: BodyType
         pos: V2
         speed: V2
@@ -90,7 +91,7 @@ let defaultConfig () =
     {
         Gravity = 2500.0
         CellSize = 64.0
-        AirDrag = 2.0
+        AirDrag = 0.0001
         GroundFriction = 12.0
     }
 
@@ -333,6 +334,6 @@ let physicsStep (cfg: PhysicsConfig) (dt: Time) (bodies: PhysicsBody list) =
                 elif b.id = col.B then resolve b { col.Normal with X = -col.Normal.X; Y = -col.Normal.Y }
                 else b)
         ) cleared
-    printfn "%A" resolved
+    // printfn "%A" resolved
     { Bodies = resolved; Collisions = collisions }
 let nextPhysFrame dt bodies = physicsStep (defaultConfig ()) dt bodies

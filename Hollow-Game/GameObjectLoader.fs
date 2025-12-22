@@ -39,8 +39,9 @@ let LoadGameObjects animationMap =
         Color = color
         CurrentAnimationName = "Attack"
     }
-    let platform = {
-        id = 1
+    let platform: PhysicsBody = {
+        id = 2
+        name = "Ground"
         bodyType = Static
         pos = v2 100.0 360.0
         speed = v2 0.0 0.0
@@ -58,7 +59,8 @@ let LoadGameObjects animationMap =
             ]
     }
     let body = {
-        id = 2
+        id = 1
+        name = "Player"
         bodyType = Dynamic
         pos = v2 0.0 0.0
         speed = v2 1.0 0.0
