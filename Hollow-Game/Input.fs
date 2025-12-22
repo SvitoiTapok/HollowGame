@@ -1,99 +1,72 @@
-type Key =
-| A
-| B
-| C
-| D
-| E
-| F
-| G
-| H
-| I
-| J
-| K
-| L
-| M
-| N
-| O
-| P
-| Q
-| R
-| S
-| T
-| U
-| V
-| W
-| X
-| Y
-| Z
-| Digit0
-| Digit1
-| Digit2
-| Digit3
-| Digit4
-| Digit5
-| Digit6
-| Digit7
-| Digit8
-| Digit9
-| F1
-| F2
-| F3
-| F4
-| F5
-| F6
-| F7
-| F8
-| F9
-| F10
-| F11
-| F12
-| Escape
-| Backspace
-| Tab
-| Enter
-| Shift
-| Control
-| Alt
-| CapsLock
-| Space
-| PageUp
-| PageDown
-| End
-| Home
-| ArrowLeft
-| ArrowUp
-| ArrowRight
-| ArrowDown
-| Insert
-| Delete
-| Numpad0
-| Numpad1
-| Numpad2
-| Numpad3
-| Numpad4
-| Numpad5
-| Numpad6
-| Numpad7
-| Numpad8
-| Numpad9
-| NumpadAdd
-| NumpadSubtract
-| NumpadMultiply
-| NumpadDivide
-| NumpadEnter
-| NumpadDecimal
-| PrintScreen
-| ScrollLock
-| Pause
-| Backquote
-| Minus
-| Equal
-| BracketLeft
-| BracketRight
-| Backslash
-| Semicolon
-| Quote
-| Comma
-| Period
-| Slash
+open Raylib_cs
+open System.Numerics
+open Animation 
 
+module Input =
+    let isMouseButtonClicked button =
+        Raylib.IsMouseButtonPressed(button)
+
+    let tryGetLeftMouseClickPosition() =
+        if Raylib.IsMouseButtonPressed(MouseButton.Left) then
+            let pos = Raylib.GetMousePosition()
+            Some { X = pos.X; Y = pos.Y; Z = 0.0f }
+        else
+            None
+
+    let tryGetRightMouseClickPosition() =
+        if Raylib.IsMouseButtonPressed(MouseButton.Right) then
+            let pos = Raylib.GetMousePosition()
+            Some { X = pos.X; Y = pos.Y; Z = 0.0f }
+        else
+            None
+
+    let tryGetMouseClickPosition button =
+        if Raylib.IsMouseButtonPressed(button) then
+            let pos = Raylib.GetMousePosition()
+            Some { X = pos.X; Y = pos.Y; Z = 0.0f }
+        else
+            None
+
+    let getLeftMouseClickPosition() =
+        if Raylib.IsMouseButtonPressed(MouseButton.Left) then
+            let pos = Raylib.GetMousePosition()
+            { X = pos.X; Y = pos.Y; Z = 0.0f }
+        else
+            { X = 0.0f; Y = 0.0f; Z = 0.0f }
+
+    let getAllMouseClicks() =
+        [ MouseButton.Left; MouseButton.Right; MouseButton.Middle ]
+        |> List.filter Raylib.IsMouseButtonPressed
+        |> List.map (fun btn ->
+            let pos = Raylib.GetMousePosition()
+            (btn, { X = pos.X; Y = pos.Y; Z = 0.0f })
+        )
+
+    let isClickInRectangle rect button =
+        if Raylib.IsMouseButtonPressed(button) then
+            let pos = Raylib.GetMousePosition()
+            Raylib.CheckCollisionPointRec(pos, rect)
+        else
+            false
+
+    let isClickInCircle center radius button =
+        if Raylib.IsMouseButtonPressed(button) then
+            let mousePos = Raylib.GetMousePosition()
+            Raylib.CheckCollisionPointCircle(mousePos, center, radius)
+        else
+            false
+
+    let isKeyboardKeyClicked key =
+        Raylib.IsKeyPressed(key)
+
+    let isSpaceClicked() =
+        isKeyboardKeyClicked KeyboardKey.Space
+
+    let isEnterClicked() =
+        isKeyboardKeyClicked KeyboardKey.Enter
+
+    let isEscapeClicked() =
+        isKeyboardKeyClicked KeyboardKey.Escape
+
+    let isAnyKeyClicked keys =
+        keys |> List.exists isKeyboardKeyClicked

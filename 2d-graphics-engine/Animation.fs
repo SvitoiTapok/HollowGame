@@ -436,11 +436,14 @@ let drawAll (objects: GraphicObject[]) (camera: Camera) =
     |> Array.iter (fun obj -> drawGraphicObject obj camera)
 
 let drawAllVisibleObjects (objects: GraphicObject[]) (camera: Camera) =
+    Raylib.BeginDrawing()
+    Raylib.ClearBackground Raylib_cs.Color.White
     objects
     |> Array.sortBy (fun obj ->
         let point = getPointOfGraphicObject obj
         -(getLevel obj), -point.Z)
     |> Array.iter (fun obj -> drawOnlyVisibleGraphicObject obj camera)
+    Raylib.EndDrawing()
 
 
 //TODO работа с текстом, batch + pipeline rendering, caching, render layer, Asset lifetime management
