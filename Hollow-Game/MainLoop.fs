@@ -17,12 +17,12 @@ let updateGraphPos (graphicObject: GraphicObject) (phisObj: PhysicsBody) =
 
 
 let nextFrame (gameObjects: GameObject list) dt camera = 
-    let graphicObjects = gameObjects |> List.map (fun d -> d.GraphicObject) 
-    drawAllVisibleObjects (graphicObjects|> List.toArray) camera
+    let graphicObjects = gameObjects |> List.map (fun d -> d.GraphicObject) |> List.toArray |> updateAllObjectsAnimations
+    drawAllVisibleObjects (graphicObjects) camera
     let physicsBodies = gameObjects |> List.map (fun d -> d.PhysicalObject)
     let updatedPhysicsBodies = (nextPhysFrame dt physicsBodies).Bodies
     let updatedGameObjects =
-        List.zip updatedPhysicsBodies graphicObjects
+        List.zip updatedPhysicsBodies (Array.toList graphicObjects)
         |> List.map (fun (newPhysicsObj, graphicObject) ->
             {
                 PhysicalObject = newPhysicsObj
