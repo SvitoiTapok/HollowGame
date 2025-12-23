@@ -63,7 +63,8 @@ let makeGorisontalPlatform x y idOffset len platpormList=
     List.concat [platpormList; List.concat [[makeWall (newPoint (int x) (int y) 0.0f) 64 64 animation2 (idOffset) "Wall"]; platformList; [makeWall (newPoint (int x+(len-1)*64) (int y) 0.0f) 64 64 animation3 (idOffset+len-1) "Wall"]]]
 
 
-let LoadGameObjects animationMap gameObjects = 
+let LoadGameObjects animationMap = 
+
     let playerRunAnim  = [| "resources/green_run_1.png"; "resources/green_run_2.png"|] |> fun frames -> loadAnimation frames 10
     let playerStandingAnim = [| "resources/green_standing.png"; |] |> fun frames -> loadAnimation frames 1
     let playerAnnimationMap = 
@@ -92,8 +93,8 @@ let LoadGameObjects animationMap gameObjects =
             Z = 0f
         }
         Layer = 0
-        W = 100
-        H = 100
+        W = 96
+        H = 96
         Animations = playerAnnimationMap
         Color = color
         CurrentAnimationName = "Run"
@@ -130,7 +131,7 @@ let LoadGameObjects animationMap gameObjects =
             [
                 {
                     Offset = v2 0.0 0.0
-                    Size = v2 100.0 100.0
+                    Size = v2 64.0 96.0
                     Kind = Solid
                     Response = Block
                     Name = "Player"
@@ -156,7 +157,7 @@ let LoadGameObjects animationMap gameObjects =
     ) 
     let animation: Animation = [| "resources/ground_floor.png"; |] |> fun frames -> loadAnimation frames 1
     let obj2 = makeGameObjectSimple sprite2 body
-    let platformList =  List.concat [gameObjects; [obj2]; groundList; rightWallList; leftWall; ceilList;]
+    let platformList =  List.concat [[obj2]; groundList; rightWallList; leftWall; ceilList;]
     let platformList = makeGorisontalPlatform 300 (900-64-200) 410 10 platformList
     let platformList = makeGorisontalPlatform 500 (900-64-500) 430 20 platformList
     let platformList = makeGorisontalPlatform 2500 (900-64-550) 450 20 platformList

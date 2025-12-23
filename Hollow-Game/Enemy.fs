@@ -24,7 +24,7 @@ let DefaultEnemy = {
     TexturePath = "resources/brown_run_1.png"
     Width = 96
     Height = 96
-    ColliderSize = v2 50.0 100.0
+    ColliderSize = v2 64 96
 }
 
 
