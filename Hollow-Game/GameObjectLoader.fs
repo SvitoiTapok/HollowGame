@@ -51,6 +51,15 @@ let makeWall (point: Point) w h animation id name=
     makeGameObject point 0 w h (Map.add "default" animation Map.empty) color "default" id name Static pos (v2 0.0 0.0) (v2 0.0 0.0) InAir coliders
     
 
+let makeGorisontalPlatform x y idOffset len platpormList= 
+    let animation1: Animation = [| "resources/ground_floor.png"; |] |> fun frames -> loadAnimation frames 1
+    let animation2: Animation = [| "resources/ground_utes.png"; |] |> fun frames -> loadAnimation frames 1
+    let animation3: Animation = [| "resources/ground_utes_left.png"; |] |> fun frames -> loadAnimation frames 1
+    let platformList = List.init (len-2) (fun i ->
+        makeWall (newPoint (x + 64 * (i+1)) y 0.0f) 64 64 animation1 (i + 1 + idOffset) "Wall"
+    )
+    List.concat [platpormList; List.concat [[makeWall (newPoint (int x) (int y) 0.0f) 64 64 animation2 (idOffset) "Wall"]; platformList; [makeWall (newPoint (int x+(len-1)*64) (int y) 0.0f) 64 64 animation3 (idOffset+len-1) "Wall"]]]
+
 
 let LoadGameObjects animationMap gameObjects = 
     let playerRunAnim  = [| "resources/green_run_1.png"; "resources/green_run_2.png"|] |> fun frames -> loadAnimation frames 10
@@ -128,20 +137,27 @@ let LoadGameObjects animationMap gameObjects =
     }
     let animation: Animation = [| "resources/ground_floor.png"; |] |> fun frames -> loadAnimation frames 1
     printfn "Creating ground objects"
-    let groundList = List.init 100 (fun i ->
+    let groundList = List.init 101 (fun i ->
         makeWall (newPoint (64 * i) (900-64) 0.0f) 64 64 animation (i + 10) "Wall"
     )  
     let animation: Animation = [| "resources/ground_wall.png"; |] |> fun frames -> loadAnimation frames 1
     let rightWallList = List.init 100 (fun i ->
-        makeWall (newPoint 6500 (900 - 64 * (i+1)) 0.0f) 64 64 animation (i + 110) "Wall"
+        makeWall (newPoint 6400 (900 - 64 * (i+2)) 0.0f) 64 64 animation (i + 110) "Wall"
     )  
-    let animation: Animation = [| "resources/ground_wall.png"; |] |> fun frames -> loadAnimation frames 1
-    let platform1List = List.init 10 (fun i ->
-        makeWall (newPoint (300 + 64 * i) (900-64-200) 0.0f) 64 64 animation (i + 210) "Wall"
+    let animation: Animation = [| "resources/ground_wall_ceil.png"; |] |> fun frames -> loadAnimation frames 1
+    let ceilList = List.init 99 (fun i ->
+        makeWall (newPoint (64+64 * i) (-5570) 0.0f) 64 64 animation (i + 210) "Wall"
     )  
-    
-    printfn "%b" (isVisible groundList.[10].GraphicObject (newMovableDepthCamera 0 0 1500 1000 0.001f 0.001f 1000f 0.0f))
-    //let obj1 = makeGameObjectSimple sprite1 platform
+    let animation: Animation = [| "resources/ground_wall_left.png"; |] |> fun frames -> loadAnimation frames 1
+    let leftWall = List.init 100 (fun i ->
+        makeWall (newPoint 0 (900 - 64 * (i+1)) 0.0f) 64 64 animation (i + 310) "Wall"
+    ) 
+    let animation: Animation = [| "resources/ground_floor.png"; |] |> fun frames -> loadAnimation frames 1
     let obj2 = makeGameObjectSimple sprite2 body
-    //printfn "%A" (List.concat [gameObjects;[obj1; obj2]; groundList])
-    List.concat [gameObjects; [obj2]; groundList; platform1List; rightWallList]
+    let platformList =  List.concat [gameObjects; [obj2]; groundList; rightWallList; leftWall; ceilList;]
+    let platformList = makeGorisontalPlatform 300 (900-64-200) 410 10 platformList
+    let platformList = makeGorisontalPlatform 500 (900-64-500) 430 20 platformList
+    let platformList = makeGorisontalPlatform 2500 (900-64-550) 450 20 platformList
+    let platformList = makeGorisontalPlatform 3500 (900-64-850) 470 8 platformList
+    let platformList = makeGorisontalPlatform 3000 (900-64-1100) 478 8 platformList
+    platformList
