@@ -129,12 +129,16 @@ let LoadGameObjects animationMap gameObjects =
         makeWall (newPoint (64 * i) (900-64) 0.0f) 64 64 animation (i + 10) "Wall"
     )  
     let animation: Animation = [| "resources/ground_wall.png"; |] |> fun frames -> loadAnimation frames 1
+    let rightWallList = List.init 100 (fun i ->
+        makeWall (newPoint 6500 (900 - 64 * (i+1)) 0.0f) 64 64 animation (i + 110) "Wall"
+    )  
+    let animation: Animation = [| "resources/ground_wall.png"; |] |> fun frames -> loadAnimation frames 1
     let platform1List = List.init 10 (fun i ->
-        makeWall (newPoint (300 + 64 * i) (900-64-200) 0.0f) 64 64 animation (i + 110) "Wall"
+        makeWall (newPoint (300 + 64 * i) (900-64-200) 0.0f) 64 64 animation (i + 210) "Wall"
     )  
     
     printfn "%b" (isVisible groundList.[10].GraphicObject (newMovableDepthCamera 0 0 1500 1000 0.001f 0.001f 1000f 0.0f))
     //let obj1 = makeGameObjectSimple sprite1 platform
     let obj2 = makeGameObjectSimple sprite2 body
     //printfn "%A" (List.concat [gameObjects;[obj1; obj2]; groundList])
-    List.concat [gameObjects; [obj2]; groundList; platform1List]
+    List.concat [gameObjects; [obj2]; groundList; platform1List; rightWallList]
