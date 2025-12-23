@@ -1,16 +1,16 @@
 module PhysicsEngine
 
-// =========================
-// БАЗОВЫЕ ТИПЫ
-// =========================
+
+
+
 
 type V2 = { X: float; Y: float }
 type Time = float
 let v2 x y = { X = x; Y = y }
 
-// =========================
-// ФИЗИЧЕСКИЕ СОСТОЯНИЯ
-// =========================
+
+
+
 
 type MotionState =
     | OnGround
@@ -18,18 +18,18 @@ type MotionState =
     | OnWallLeft
     | OnWallRight
 
-// =========================
-// ТЕЛА
-// =========================
+
+
+
 
 type BodyType =
     | Static
     | Dynamic
     | Kinematic
 
-// =========================
-// КОЛЛАЙДЕРЫ
-// =========================
+
+
+
 
 type ColliderKind =
     | Solid
@@ -59,9 +59,9 @@ type Rect =
         Name: string
     }
 
-// =========================
-// ОБЪЕКТ ФИЗИКИ
-// =========================
+
+
+
 
 type PhysicsBody =
     {
@@ -75,9 +75,9 @@ type PhysicsBody =
         state: MotionState
     }
 
-// =========================
-// НАСТРОЙКИ
-// =========================
+
+
+
 
 type PhysicsConfig =
     {
@@ -95,9 +95,9 @@ let defaultConfig () =
         GroundFriction = 12.0
     }
 
-// =========================
-// RECT UTILS
-// =========================
+
+
+
 
 module RectUtils =
 
@@ -130,9 +130,9 @@ module RectUtils =
             if abs dx < abs dy then Some (v2 dx 0.0)
             else Some (v2 0.0 dy)
 
-// =========================
-// ПРОСТРАНСТВЕННАЯ СЕТКА
-// =========================
+
+
+
 
 type SpatialGrid =
     {
@@ -169,9 +169,9 @@ module Grid =
         )
         |> List.distinct
 
-// =========================
-// ИНТЕГРАЦИЯ + ЗАМЕДЛЕНИЕ
-// =========================
+
+
+
 
 let applyDrag (cfg: PhysicsConfig) (dt: Time) (b: PhysicsBody) =
     if b.bodyType <> Dynamic then b
@@ -217,9 +217,9 @@ let integrate (cfg: PhysicsConfig) (dt: Time) (b: PhysicsBody) =
 
         { b with pos = pos; speed = speed; acc = acc }
 
-// =========================
-// КОЛЛИЗИИ
-// =========================
+
+
+
 
 type Collision =
     {
@@ -277,9 +277,9 @@ let detectCollisions (a: PhysicsBody) (b: PhysicsBody) =
         )
     )
 
-// =========================
-// РЕЗОЛВ
-// =========================
+
+
+
 
 let resolve (body: PhysicsBody) (normal: V2) =
     if body.bodyType <> Dynamic then body
@@ -309,26 +309,26 @@ let resolve (body: PhysicsBody) (normal: V2) =
                 state = OnWallRight
             }
 
-// =========================
-// ТОЧНОЕ РЕШЕНИЕ КОЛЛИЗИЙ С ПОЛОМ
-// =========================
+
+
+
 
 let resolveGroundCollision (body: PhysicsBody) (collisionNormal: V2) (floorRect: Rect) =
     if body.bodyType <> Dynamic || collisionNormal.Y >= 0.0 then body
     else
-        // Находим самый нижний коллайдер тела
+        
         let lowestCollider =
             body.colliders
             |> List.minBy (fun c -> body.pos.Y + c.Offset.Y)
         
-        // Вычисляем точную позицию для тела
+        
         let bodyBottomY = body.pos.Y + lowestCollider.Offset.Y + lowestCollider.Size.Y
         let floorTopY = floorRect.Y
         
-        // Вычисляем насколько тело проникло в пол
+        
         let penetrationDepth = bodyBottomY - floorTopY
         
-        // Корректируем позицию точно на границу пола
+        
         let correctedY = body.pos.Y - penetrationDepth
         
         { body with
@@ -337,9 +337,9 @@ let resolveGroundCollision (body: PhysicsBody) (collisionNormal: V2) (floorRect:
             state = OnGround
         }
 
-// =========================
-// ШАГ ФИЗИКИ
-// =========================
+
+
+
 
 type StepResult =
     {
@@ -378,33 +378,33 @@ let physicsStep (cfg: PhysicsConfig) (dt: Time) (bodies: PhysicsBody list) =
 
     let cleared =
         moved |> List.map (fun b -> 
-            // Проверяем, находится ли тело уже на земле и не движется ли вверх
-            // Это предотвращает "прыжки в воздухе"
+            
+            
             match b.state with
             | OnGround when b.speed.Y = 0.0 -> 
-                // Оставляем OnGround, если тело уже на земле и не движется вверх
+                
                 b
             | _ -> 
                 { b with state = InAir }
         )
 
-    // Разделяем коллизии на вертикальные и горизонтальные
+    
     let verticalCollisions, horizontalCollisions =
         collisions
         |> List.partition (fun col -> col.Normal.Y <> 0.0)
 
-    // Сначала обрабатываем вертикальные коллизии (особенно с полом)
+    
     let verticallyResolved =
         verticalCollisions
         |> List.fold (fun bs col ->
             bs |> List.map (fun b ->
                 if b.id = col.A then
-                    // Определяем, кто из тел - пол (статический)
+                    
                     let otherBody = 
                         cleared |> List.find (fun o -> o.id = col.B)
                     
                     if otherBody.bodyType = Static && col.Normal.Y < 0.0 then
-                        // Это коллизия с полом
+                        
                         let floorRect = RectUtils.absolute otherBody.pos col.ColliderB
                         resolveGroundCollision b col.Normal floorRect
                     else
@@ -414,7 +414,7 @@ let physicsStep (cfg: PhysicsConfig) (dt: Time) (bodies: PhysicsBody list) =
                         cleared |> List.find (fun o -> o.id = col.A)
                     
                     if otherBody.bodyType = Static && col.Normal.Y > 0.0 then
-                        // Это коллизия с полом (для второго тела нормаль инвертирована)
+                        
                         let floorRect = RectUtils.absolute otherBody.pos col.ColliderA
                         let invertedNormal = { col.Normal with X = -col.Normal.X; Y = -col.Normal.Y }
                         resolveGroundCollision b invertedNormal floorRect
@@ -423,7 +423,7 @@ let physicsStep (cfg: PhysicsConfig) (dt: Time) (bodies: PhysicsBody list) =
                 else b)
         ) cleared
 
-    // Затем обрабатываем горизонтальные коллизии
+    
     let resolved =
         horizontalCollisions
         |> List.fold (fun bs col ->

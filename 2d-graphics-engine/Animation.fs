@@ -214,16 +214,7 @@ let rec setPointToGraphicObjectPoint (graphicObject: GraphicObject) (point: Poin
 
 let isVisible (graphicObject: GraphicObject) (camera: Camera) =
     true
-    // let { X = objectX; Y = objectY; Z = objectZ } = getPointOfGraphicObject graphicObject
-    // let objectWidth, objectHeigth = getSizesOfGraphicObject graphicObject
-    // let inCameraX = int (objectX - camera.X) + (camera.W / 2 - objectWidth / 2)
-    // let inCameraY = int (objectY - camera.Y) + (camera.H / 2 - objectHeigth / 2)
-
-    // camera.ZNear <= objectZ && objectZ <= camera.ZFar
-    // && 0 <= inCameraX + objectWidth
-    // && inCameraX - objectWidth <= camera.W
-    // && 0 <= inCameraY + objectHeigth
-    // && inCameraY - objectHeigth <= camera.H
+    
 
 let calculateParalaxFactor (graphicObject: GraphicObject) = 
     let { X = objectX; Y = objectY; Z = objectZ } = getPointOfGraphicObject graphicObject
@@ -477,4 +468,4 @@ let drawAllVisibleObjects (objects: GraphicObject[]) (camera: Camera) =
     Raylib.EndDrawing()
 
 
-//TODO работа с текстом, batch + pipeline rendering, caching, render layer, Asset lifetime management
+

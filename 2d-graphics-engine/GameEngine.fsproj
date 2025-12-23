@@ -12,13 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Rectangle.fs" />
-    <Compile Include="Camera.fs" />
-    <Compile Include="Graphic.fs" />
     <Compile Include="Animation.fs" />
-    <Compile Include="Example.fs" />
-    <Compile Include="Program.fs" />
-    
   </ItemGroup>
 
 </Project>

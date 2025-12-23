@@ -16,7 +16,6 @@ type EnemyType = {
     ColliderSize: V2
 }
 
-// Предопределенные типы врагов
 let DefaultEnemy = {
     WalkSpeed = 400.0
     JumpForce = 1000.0
@@ -28,14 +27,12 @@ let DefaultEnemy = {
 }
 
 
-// Загрузка анимаций врага
 let loadEnemyAnimation enemyType =
     let animation = 
         enemyType.TexturePath
         |> fun frames -> loadAnimation frames 10
     Map.add "Idle" animation Map.empty
 
-// Создание врага
 let createEnemy (position: V2) (enemyType: EnemyType) (enemyAnimations: Map<string, Animation>) id=
     let point = { 
         X = int position.X
@@ -70,7 +67,6 @@ let createEnemy (position: V2) (enemyType: EnemyType) (enemyAnimations: Map<stri
             }
         ]
 
-// Обновление поведения врага
 let updateEnemy (enemy: GameObject) (player: GameObject) (enemyType: EnemyType) (dt: float) =
     let playerPos = player.PhysicalObject.pos
     let enemyPos = enemy.PhysicalObject.pos
@@ -88,19 +84,17 @@ let updateEnemy (enemy: GameObject) (player: GameObject) (enemyType: EnemyType) 
         // Устанавливаем скорость движения в сторону игрока
         let newSpeedX = enemyType.WalkSpeed * direction
         
-        // Прыжок, если враг на земле и игрок выше
         let shouldJump = 
             enemy.PhysicalObject.state = OnGround && 
-            distanceY < -50.0 &&  // Игрок выше врага
-            abs distanceX < 200.0 // Игрок не слишком далеко по горизонтали
+            distanceY < -50.0 &&
+            abs distanceX < 200.0
         
         let newSpeedY = 
             if shouldJump then
-                -enemyType.JumpForce  // Отрицательная скорость для прыжка
+                -enemyType.JumpForce
             else
                 enemy.PhysicalObject.speed.Y
         
-        // Обновляем скорость врага
         { enemy with 
             PhysicalObject = { 
                 enemy.PhysicalObject with 
@@ -113,7 +107,6 @@ let updateEnemy (enemy: GameObject) (player: GameObject) (enemyType: EnemyType) 
                     setMirroredByHorizontal enemy.GraphicObject false
         }
     else
-        // Останавливаем врага, если игрок вне зоны обнаружения
         { enemy with 
             PhysicalObject = { 
                 enemy.PhysicalObject with 

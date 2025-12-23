@@ -90,11 +90,11 @@ let makePlayerMove player character gameObjects =
     else if hasStartedRunning then {player with GraphicObject = changeGameObjectAnimation player.GraphicObject "Run" }, projectile
     else player, projectile
 
-// Обновление поведения всех врагов
+ 
 let updateEnemies (enemies: GameObject list) (player: GameObject) dt =
     enemies
     |> List.map (fun enemy ->
-        // Определяем тип врага (можно расширить для хранения типа в GameObject)
+         
         let enemyType = 
             DefaultEnemy
         
@@ -120,26 +120,50 @@ let collisionHandler gameState collisions =
             let delBlist = if List.length (List.filter (fun y -> y.PhysicalObject.id=x.B) acc.GameObjects) = 1 then List.removeAt (List.findIndex (fun y -> y.PhysicalObject.id=x.B) acc.GameObjects) acc.GameObjects else acc.GameObjects
             {acc with GameObjects=delBlist}
         | _ -> acc) gameState collisions 
-let doFrame gameState =
-    // Получаем игрока
-    let player = Option.get (List.tryFind (fun x -> x.PhysicalObject.name = "Player") gameState.GameObjects)
+
+let doFrame gameState spawnTimer remainingPositions nextEnemyId =
+    let dt = 1.0 / float gameState.FpsCount
     
-    // Разделяем врагов и другие объекты
-    let enemies = gameState.GameObjects |> List.filter (fun x -> x.PhysicalObject.name.StartsWith("Enemy"))
-    let otherObjects = gameState.GameObjects |> List.filter (fun x -> not (x.PhysicalObject.name.StartsWith("Enemy")))
+     
+    let spawnInterval = 10.0  
+    let (newSpawnTimer, newEnemy, newRemainingPositions, newNextEnemyId) =
+        if spawnTimer >= spawnInterval && not (List.isEmpty remainingPositions) then
+             
+            let spawnPos = List.head remainingPositions
+            let newRemainingPositions = List.tail remainingPositions
+            
+             
+            let newEnemy = createEnemy spawnPos DefaultEnemy (loadEnemyAnimation DefaultEnemy) nextEnemyId
+            (0.0, Some newEnemy, newRemainingPositions, nextEnemyId + 1)
+        else
+            (spawnTimer + dt, None, remainingPositions, nextEnemyId)
     
-    // Обновляем поведение врагов
-    let updatedEnemies = updateEnemies enemies player (1.0 / float gameState.FpsCount)
+     
+    let gameObjectsWithNewEnemy =
+        match newEnemy with
+        | Some enemy -> gameState.GameObjects @ [enemy]
+        | None -> gameState.GameObjects
     
-    // Объединяем обновленные враги с другими объектами
+     
+    let player = Option.get (List.tryFind (fun x -> x.PhysicalObject.name = "Player") gameObjectsWithNewEnemy)
+    
+     
+    let enemies = gameObjectsWithNewEnemy |> List.filter (fun x -> x.PhysicalObject.name.StartsWith("Enemy"))
+    let otherObjects = gameObjectsWithNewEnemy |> List.filter (fun x -> not (x.PhysicalObject.name.StartsWith("Enemy")))
+    
+     
+    let updatedEnemies = updateEnemies enemies player dt
+    
+     
     let allGameObjects = otherObjects @ updatedEnemies
-    let gameState = {gameState with GameObjects = allGameObjects}
+    let gameStateWithUpdatedEnemies = {gameState with GameObjects = allGameObjects}
     
-    // Применяем физику ко всем объектам
-    let bodies, collisions = nextFrame allGameObjects (1.0/float gameState.FpsCount) gameState.Camera
-    let gameState = collisionHandler {gameState with GameObjects = bodies} collisions
-    let bodies = gameState.GameObjects
-    // Обновляем игрока (существующий код)
+     
+    let bodies, collisions = nextFrame allGameObjects dt gameState.Camera
+    let gameStateAfterCollisions = collisionHandler {gameStateWithUpdatedEnemies with GameObjects = bodies} collisions
+    let bodies = gameStateAfterCollisions.GameObjects
+    
+     
     let player = Option.get (List.tryFind (fun x -> x.PhysicalObject.name = "Player") bodies)
     let character = {
         IsWalkingLeft = false
@@ -149,17 +173,16 @@ let doFrame gameState =
         IsAttacking = false, newPoint 0 0 0.0f
     }
     let newCharacter = gameState.InputHandler.CollectEvents() |> handleEvents character
-    let (newPlayer: GameObject, projectile) = makePlayerMove player newCharacter gameState.GameObjects
+    let (newPlayer: GameObject, projectile) = makePlayerMove player newCharacter bodies
     let camera = followingCamera gameState.Camera player 0.0001f
-    {gameState with GameObjects = bodies @ projectile |> List.map(fun x -> if x.PhysicalObject.name="Player" then newPlayer else x); Camera = camera}
+    
+    let finalGameObjects = bodies @ projectile |> List.map(fun x -> if x.PhysicalObject.name="Player" then newPlayer else x)
+    let finalGameState = {gameStateAfterCollisions with GameObjects = finalGameObjects; Camera = camera}
+    
+    (finalGameState, newSpawnTimer, newRemainingPositions, newNextEnemyId)
 
 
-    //Raylib.DrawText("Sprite Animation Demo", 10, 10, 20, Color.Black)
-    // match toBool (Raylib.WindowShouldClose()) with
-    // | false -> doFrame bodies camera fpsCount
-    // | _ -> ()
-
-let setUpMenu gameState = 
+let setUpMenu gameState spawnTimer remainingPositions nextEnemyId = 
     let buttonsGraph = gameState.Buttons |> List.map (fun x -> DrawableObject x.Bounds)
     let background = gameState.GameObjects |> List.map (fun x -> x.GraphicObject)
 
@@ -167,9 +190,13 @@ let setUpMenu gameState =
     let states = gameState.InputHandler.CollectEvents() |> List.map(fun x -> handleTransition gameState.GameMode gameState.Buttons x) |> List.filter(fun x -> not (x = gameState.GameMode))
     let state = if states |> List.length = 1 then states |> List.head else gameState.GameMode
 
-    { gameState with GameMode = state }
+    ({ gameState with GameMode = state }, spawnTimer, remainingPositions, nextEnemyId)
 
-let createEnemiesOnMap () =
+let loadMainLoop gameState = 
+     
+    let baseGameObjects = LoadGameObjects () @ [downloadBackground ()]
+    
+     
     let enemyPositions = [
         v2 1000.0 0.0
         v2 2000.0 -100.0
@@ -178,28 +205,30 @@ let createEnemiesOnMap () =
         v2 -1000.0 0.0
     ]
     
-    // Создаем врагов разных типов
-    let defaultEnemies = 
-        enemyPositions.[0..2] 
-        |> List.mapi (fun i pos -> 
-            createEnemy pos DefaultEnemy (loadEnemyAnimation DefaultEnemy) (239932 + i))  
+     
+    let initialEnemies = 
+        match enemyPositions with
+        | firstPos :: remainingPositions ->
+            [createEnemy firstPos DefaultEnemy (loadEnemyAnimation DefaultEnemy) 239932]
+        | [] -> []
     
-    
- 
-    defaultEnemies
-
-let loadMainLoop gameState = 
-    // Загружаем игровые объекты
-    let baseGameObjects = LoadGameObjects () @ [downloadBackground ()]
-
-    
-    // Создаем врагов
-    let enemies = createEnemiesOnMap ()
+     
+    let remainingSpawnPositions = [
+        v2 2000.0 -100.0
+        v2 3000.0 0.0
+        v2 4000.0 -200.0
+        v2 -1000.0 0.0
+        v2 1500.0 -300.0
+        v2 2500.0 -150.0
+        v2 3500.0 -250.0
+        v2 500.0 -200.0
+    ]
     
     { gameState with 
-        GameObjects = baseGameObjects @ enemies
+        GameObjects = baseGameObjects @ initialEnemies
         GameMode = MainLoop 
     }
+    
 let setUpDeathScene gameState = 
     let buttons = createDeathScene ()
     {
@@ -211,7 +240,7 @@ let setUpDeathScene gameState =
         GameObjects = [downloadDeathScene ()]
         InputHandler = gameState.InputHandler
     }
-let doDeathScene gameState = 
+let doDeathScene gameState spawnTimer remainingPositions nextEnemyId = 
     let buttonsGraph = gameState.Buttons |> List.map (fun x -> DrawableObject x.Bounds)
     let background = gameState.GameObjects |> List.map (fun x -> x.GraphicObject)
 
@@ -219,7 +248,7 @@ let doDeathScene gameState =
     let states = gameState.InputHandler.CollectEvents() |> List.map(fun x -> handleTransition gameState.GameMode gameState.Buttons x) |> List.filter(fun x -> not (x = gameState.GameMode))
     let state = if states |> List.length = 1 then states |> List.head else gameState.GameMode
 
-    { gameState with GameMode = state }
+    ({ gameState with GameMode = state }, spawnTimer, remainingPositions, nextEnemyId)
 
 let setUpWinScene gameState = 
     let buttons = createWinScene ()
@@ -232,7 +261,7 @@ let setUpWinScene gameState =
         GameObjects = [downloadWinScene ()]
         InputHandler = gameState.InputHandler
     }
-let doWinScene gameState = 
+let doWinScene gameState spawnTimer remainingPositions nextEnemyId = 
     let buttonsGraph = gameState.Buttons |> List.map (fun x -> DrawableObject x.Bounds)
     let background = gameState.GameObjects |> List.map (fun x -> x.GraphicObject)
 
@@ -240,24 +269,40 @@ let doWinScene gameState =
     let states = gameState.InputHandler.CollectEvents() |> List.map(fun x -> handleTransition gameState.GameMode gameState.Buttons x) |> List.filter(fun x -> not (x = gameState.GameMode))
     let state = if states |> List.length = 1 then states |> List.head else gameState.GameMode
 
-    { gameState with GameMode = state } 
-let rec doGameLoop gameState =
+    ({ gameState with GameMode = state }, spawnTimer, remainingPositions, nextEnemyId)
+
+let rec doGameLoop gameState spawnTimer remainingPositions nextEnemyId =
     if toBool (Raylib.WindowShouldClose()) then
         ()
     else
         
-        let newGameState =
+        let (newGameState, newSpawnTimer, newRemainingPositions, newNextEnemyId) =
             match gameState.GameMode with
-            | Menu -> setUpMenu gameState
-            | LoadMainLoop -> loadMainLoop gameState
-            | MainLoop -> doFrame gameState
-            | DeathScene -> doDeathScene gameState
-            | SetUpDeathScene -> setUpDeathScene gameState
-            | SetUpWinScene -> setUpWinScene gameState
-            | WinScene -> doWinScene gameState
-            | _ -> gameState
-        if newGameState.GameMode=Close then () else
-        doGameLoop newGameState
+            | Menu -> setUpMenu gameState spawnTimer remainingPositions nextEnemyId
+            | LoadMainLoop -> 
+                 
+                let initialSpawnTimer = 0.0
+                let initialNextEnemyId = 239933
+                let initialRemainingPositions = [
+                    v2 2000.0 -100.0
+                    v2 3000.0 0.0
+                    v2 4000.0 -200.0
+                    v2 -1000.0 0.0
+                    v2 1500.0 -300.0
+                    v2 2500.0 -150.0
+                    v2 3500.0 -250.0
+                    v2 500.0 -200.0
+                ]
+                (loadMainLoop gameState, initialSpawnTimer, initialRemainingPositions, initialNextEnemyId)
+            | MainLoop -> doFrame gameState spawnTimer remainingPositions nextEnemyId
+            | DeathScene -> doDeathScene gameState spawnTimer remainingPositions nextEnemyId
+            | SetUpDeathScene -> (setUpDeathScene gameState, spawnTimer, remainingPositions, nextEnemyId)
+            | SetUpWinScene -> (setUpWinScene gameState, spawnTimer, remainingPositions, nextEnemyId)
+            | WinScene -> doWinScene gameState spawnTimer remainingPositions nextEnemyId
+            | _ -> (gameState, spawnTimer, remainingPositions, nextEnemyId)
+        
+        if newGameState.GameMode = Close then () 
+        else doGameLoop newGameState newSpawnTimer newRemainingPositions newNextEnemyId
         
 [<EntryPoint>]
 let main argv =
@@ -266,7 +311,7 @@ let main argv =
     Raylib.SetTargetFPS (int fpsCount)
     let InputHandler = InputHandler()
     
-    // Загрузка анимации
+     
     let camera = newMovableDepthCamera 0 0 1500 1000 0.001f 0.001f 1000f 0.0f
 
     let buttons = makeMenuButtons ()
@@ -279,6 +324,11 @@ let main argv =
         InputHandler = InputHandler
     }
     
-    doGameLoop gameState
+     
+    let initialSpawnTimer = 0.0
+    let initialRemainingPositions = []
+    let initialNextEnemyId = 239932
+    
+    doGameLoop gameState initialSpawnTimer initialRemainingPositions initialNextEnemyId
     Raylib.CloseWindow()
     0
