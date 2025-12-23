@@ -225,6 +225,8 @@ type Collision =
     {
         A: int
         B: int
+        AName: string
+        BName: string
         Normal: V2
         ColliderA: RelativeRect
         ColliderB: RelativeRect
@@ -245,6 +247,8 @@ let detectCollisions (a: PhysicsBody) (b: PhysicsBody) =
                     {
                         A = a.id
                         B = b.id
+                        AName = a.name
+                        BName = b.name
                         Normal = n
                         ColliderA = ca
                         ColliderB = cb

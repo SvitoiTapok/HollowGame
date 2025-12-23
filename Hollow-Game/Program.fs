@@ -149,6 +149,12 @@ let updateEnemies (enemies: GameObject list) (player: GameObject) dt =
         
         updateEnemy enemy player enemyType dt)
 
+let collisionHandler gameState collisions = 
+    printfn "%A" gameState.GameMode
+    List.fold (fun acc x -> 
+        match x with
+        | _ when x.AName="Player" && x.BName="Enemy" || x.AName="Enemy" && x.BName="Player" -> {acc with GameMode=DeathScene}
+        | _ -> acc) gameState collisions 
 let doFrame gameState =
     let attacksGameObjs = gameState.Attacks |> List.map (fun x -> x.GameObject)
     // Получаем игрока
@@ -163,9 +169,12 @@ let doFrame gameState =
     
     // Объединяем обновленные враги с другими объектами
     let allGameObjects = otherObjects @ updatedEnemies
+    let gameState = {gameState with GameObjects = allGameObjects}
     
     // Применяем физику ко всем объектам
-    let bodies = nextFrame allGameObjects (1.0/float gameState.FpsCount) gameState.Camera
+    let bodies, collisions = nextFrame (allGameObjects @ attacksGameObjs) (1.0/float gameState.FpsCount) gameState.Camera
+    //printfn "%A" collisions
+    let gameState = collisionHandler gameState collisions
     
     // Обновляем игрока (существующий код)
     let player = Option.get (List.tryFind (fun x -> x.PhysicalObject.name = "Player") bodies)
@@ -229,6 +238,9 @@ let loadMainLoop gameState =
         GameObjects = baseGameObjects @ enemies
         GameMode = MainLoop 
     }
+let doDeathScene gamestate = 
+    printfn "lol, u died"
+    gamestate
 
 let rec doGameLoop gameState =
     if toBool (Raylib.WindowShouldClose()) then
@@ -240,6 +252,7 @@ let rec doGameLoop gameState =
             | Menu -> setUpMenu gameState
             | LoadMainLoop -> loadMainLoop gameState
             | MainLoop -> doFrame gameState
+            | DeathScene -> doDeathScene gameState
             | _ -> gameState
         
         doGameLoop newGameState

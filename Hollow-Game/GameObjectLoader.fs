@@ -152,7 +152,7 @@ let LoadGameObjects animationMap gameObjects =
     )  
     let animation: Animation = [| "resources/ground_wall_left.png"; |] |> fun frames -> loadAnimation frames 1
     let leftWall = List.init 100 (fun i ->
-        makeWall (newPoint 0 (900 - 64 * (i+1)) 0.0f) 64 64 animation (i + 310) "Wall"
+        makeWall (newPoint 0 (900 - 64 * (i+2)) 0.0f) 64 64 animation (i + 310) "Wall"
     ) 
     let animation: Animation = [| "resources/ground_floor.png"; |] |> fun frames -> loadAnimation frames 1
     let obj2 = makeGameObjectSimple sprite2 body
