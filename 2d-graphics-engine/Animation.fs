@@ -148,6 +148,12 @@ let rec getPointOfGraphicObject (graphicObject: GraphicObject) =
     | Scope scope -> scope.Point
     | MaskedGraphicObject masked -> getPointOfGraphicObject masked.Object
 
+let rec getCurrentAnimation (graphicObject: GraphicObject) = 
+    match graphicObject with 
+    | DrawableObject obj -> obj.CurrentAnimationName
+    | RelativeGraphicObject obj -> getCurrentAnimation obj.Object
+    | MaskedGraphicObject masked -> getCurrentAnimation masked.Object
+
 let rec addPointToGraphicObjectPoint (graphicObject: GraphicObject) (point: Point) =
     match graphicObject with
     | DrawableObject obj ->
@@ -168,6 +174,7 @@ let rec addPointToGraphicObjectPoint (graphicObject: GraphicObject) (point: Poin
         MaskedGraphicObject
             {| masked with
                 Object = addPointToGraphicObjectPoint masked.Object point |}
+
                 
 let rec setPointToGraphicObjectPoint (graphicObject: GraphicObject) (point: Point) =
     match graphicObject with
@@ -324,6 +331,9 @@ let rec updateGraphicObjectAnimation (graphicObject: GraphicObject) =
             {| scope with
                 Objects = scope.Objects |> Array.map updateGraphicObjectAnimation |}
     | _ -> graphicObject
+
+let rec updateAllObjectsAnimations (graphicObjects: GraphicObject[]) =
+    graphicObjects |> Array.map updateGraphicObjectAnimation
 
 let rec resetCurrentAnimation (graphicObject: GraphicObject) =
     match graphicObject with
