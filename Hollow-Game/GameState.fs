@@ -16,6 +16,7 @@ type GameMode =
     | SetUpDeathScene
     | SetUpWinScene
     | WinScene
+    | Close
 
 type GameState = {
     GameMode: GameMode

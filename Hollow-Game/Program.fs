@@ -108,10 +108,17 @@ let collisionHandler gameState collisions =
 
             let delAlist = List.removeAt (List.findIndex (fun y -> y.PhysicalObject.id=x.A) acc.GameObjects) acc.GameObjects
             let delBlist = List.removeAt (List.findIndex (fun y -> y.PhysicalObject.id=x.B) delAlist) delAlist
-            printfn "%A" (delBlist |> List.filter (fun x -> not (x.PhysicalObject.name ="Wall")))
             {acc with GameObjects=delBlist}
         | _ when x.AName="Exit" && x.BName="Player" || x.AName="Player" && x.BName="Exit" -> 
             {acc with GameMode = SetUpWinScene}
+        | _ when x.AName="attackParticle" && x.BName="Wall" ->
+            printfn "%A" x
+            let delAlist = if List.length (List.filter (fun y -> y.PhysicalObject.id=x.A) acc.GameObjects) = 1 then List.removeAt (List.findIndex (fun y -> y.PhysicalObject.id=x.A) acc.GameObjects) acc.GameObjects else acc.GameObjects
+            {acc with GameObjects=delAlist}
+        | _ when x.AName="Wall" && x.BName="attackParticle" -> 
+            printfn "%A" x
+            let delBlist = if List.length (List.filter (fun y -> y.PhysicalObject.id=x.B) acc.GameObjects) = 1 then List.removeAt (List.findIndex (fun y -> y.PhysicalObject.id=x.B) acc.GameObjects) acc.GameObjects else acc.GameObjects
+            {acc with GameObjects=delBlist}
         | _ -> acc) gameState collisions 
 let doFrame gameState =
     // Получаем игрока
@@ -249,7 +256,7 @@ let rec doGameLoop gameState =
             | SetUpWinScene -> setUpWinScene gameState
             | WinScene -> doWinScene gameState
             | _ -> gameState
-        
+        if newGameState.GameMode=Close then () else
         doGameLoop newGameState
         
 [<EntryPoint>]
