@@ -117,7 +117,7 @@ let makePlayerAttack character player attacks =
     let isAttacking, point = character.IsAttacking 
     if not isAttacking then attacks
     else
-        List.append attacks [spawnAttack (getPointOfGraphicObject player.GraphicObject) point 100 100 (Map.add "default" AttackAnimation Map.empty) "default" 10000 0.05f]
+        List.append attacks [spawnAttack (getPointOfGraphicObject player.GraphicObject) point 100 100 (Map.add "default" AttackAnimation Map.empty) "default" (10000+ List.length attacks) 0.05f]
 let makePlayerJump  character player = 
     if character.IsJumping && not character.IsInAir then {player with PhysicalObject = {player.PhysicalObject with speed={X = player.PhysicalObject.speed.X; Y = -1000}}}
     else player
