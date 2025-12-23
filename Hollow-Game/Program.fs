@@ -26,7 +26,7 @@ let downloadBackground () =
         |> fun frames -> loadAnimation frames 1
     let background = Map.add "background" back Map.empty
     let color = newColor 255uy 255uy 255uy 255uy
-    let point = newPoint 0 0 4.0f
+    let point = newPoint -5000 -7000 10f
     let coliders=   [
             {
                 Offset = v2 0.0 0.0
@@ -36,7 +36,7 @@ let downloadBackground () =
                 Name = "Ground"
             }
         ]
-    makeGameObject point 4 8000 6000 background color "background" 2 "background" Static (v2 0.0 0.0) (v2 0.0 0.0) (v2 0.0 0.0) InAir coliders
+    makeGameObject point 4 30000 20000 background color "background" 2 "background" Static (v2 -5000 -7000) (v2 0.0 0.0) (v2 0.0 0.0) InAir coliders
 
 let followingCamera (camera: Camera) (gameObject: GameObject) dSpeed = 
     let EPSILON = single 1e-2

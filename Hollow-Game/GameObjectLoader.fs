@@ -59,19 +59,19 @@ let LoadGameObjects animationMap gameObjects =
         |> Map.add "Run" playerRunAnim
         |> Map.add "Standing" playerStandingAnim
     let color = newColor 255uy 255uy 255uy 255uy
-    let sprite1 = DrawableObject {
-        Point = {
-            X = 0
-            Y = 0
-            Z = 0f
-        }
-        Layer = 0
-        W = 400
-        H = 300
-        Animations = animationMap
-        Color = color
-        CurrentAnimationName = "Attack"
-    }
+    // let sprite1 = DrawableObject {
+    //     Point = {
+    //         X = 0
+    //         Y = 0
+    //         Z = 0f
+    //     }
+    //     Layer = 0
+    //     W = 400
+    //     H = 300
+    //     Animations = animationMap
+    //     Color = color
+    //     CurrentAnimationName = "Attack"
+    // }
     let sprite2 = DrawableObject {
         Point = {
             X = 0
@@ -79,31 +79,31 @@ let LoadGameObjects animationMap gameObjects =
             Z = 0f
         }
         Layer = 0
-        W = 400
-        H = 300
+        W = 100
+        H = 100
         Animations = playerAnnimationMap
         Color = color
         CurrentAnimationName = "Run"
     }
-    let platform: PhysicsBody = {
-        id = 3
-        name = "Ground"
-        bodyType = Static
-        pos = v2 100.0 360.0
-        speed = v2 0.0 0.0
-        acc = v2 0.0 0.0
-        state = InAir
-        colliders =
-            [
-                {
-                    Offset = v2 0.0 0.0
-                    Size = v2 100.0 100.0
-                    Kind = Solid
-                    Response = Block
-                    Name = "Ground"
-                }
-            ]
-    }
+    // let platform: PhysicsBody = {
+    //     id = 3
+    //     name = "Ground"
+    //     bodyType = Static
+    //     pos = v2 100.0 360.0
+    //     speed = v2 0.0 0.0
+    //     acc = v2 0.0 0.0
+    //     state = InAir
+    //     colliders =
+    //         [
+    //             {
+    //                 Offset = v2 0.0 0.0
+    //                 Size = v2 100.0 100.0
+    //                 Kind = Solid
+    //                 Response = Block
+    //                 Name = "Ground"
+    //             }
+    //         ]
+    // }
     let body = {
         id = 1
         name = "Player"
@@ -116,7 +116,7 @@ let LoadGameObjects animationMap gameObjects =
             [
                 {
                     Offset = v2 0.0 0.0
-                    Size = v2 400.0 300.0
+                    Size = v2 100.0 100.0
                     Kind = Solid
                     Response = Block
                     Name = "Player"
@@ -128,9 +128,13 @@ let LoadGameObjects animationMap gameObjects =
     let groundList = List.init 100 (fun i ->
         makeWall (newPoint (64 * i) (900-64) 0.0f) 64 64 animation (i + 10) "Wall"
     )  
+    let animation: Animation = [| "resources/ground_wall.png"; |] |> fun frames -> loadAnimation frames 1
+    let platform1List = List.init 10 (fun i ->
+        makeWall (newPoint (300 + 64 * i) (900-64-200) 0.0f) 64 64 animation (i + 110) "Wall"
+    )  
     
     printfn "%b" (isVisible groundList.[10].GraphicObject (newMovableDepthCamera 0 0 1500 1000 0.001f 0.001f 1000f 0.0f))
-    let obj1 = makeGameObjectSimple sprite1 platform
+    //let obj1 = makeGameObjectSimple sprite1 platform
     let obj2 = makeGameObjectSimple sprite2 body
     //printfn "%A" (List.concat [gameObjects;[obj1; obj2]; groundList])
-    List.concat [gameObjects;[obj1; obj2]; groundList]
+    List.concat [gameObjects; [obj2]; groundList; platform1List]
