@@ -83,8 +83,8 @@ type PhysicsConfig =
     {
         Gravity: float
         CellSize: float
-        AirDrag: float          // <-- новое
-        GroundFriction: float   // <-- новое
+        AirDrag: float
+        GroundFriction: float
     }
 
 let defaultConfig () =
@@ -285,6 +285,34 @@ let resolve (body: PhysicsBody) (normal: V2) =
             }
 
 // =========================
+// ТОЧНОЕ РЕШЕНИЕ КОЛЛИЗИЙ С ПОЛОМ
+// =========================
+
+let resolveGroundCollision (body: PhysicsBody) (collisionNormal: V2) (floorRect: Rect) =
+    if body.bodyType <> Dynamic || collisionNormal.Y >= 0.0 then body
+    else
+        // Находим самый нижний коллайдер тела
+        let lowestCollider =
+            body.colliders
+            |> List.minBy (fun c -> body.pos.Y + c.Offset.Y)
+        
+        // Вычисляем точную позицию для тела
+        let bodyBottomY = body.pos.Y + lowestCollider.Offset.Y + lowestCollider.Size.Y
+        let floorTopY = floorRect.Y
+        
+        // Вычисляем насколько тело проникло в пол
+        let penetrationDepth = bodyBottomY - floorTopY
+        
+        // Корректируем позицию точно на границу пола
+        let correctedY = body.pos.Y - penetrationDepth
+        
+        { body with
+            pos = { body.pos with Y = correctedY }
+            speed = { body.speed with Y = 0.0 }
+            state = OnGround
+        }
+
+// =========================
 // ШАГ ФИЗИКИ
 // =========================
 
@@ -324,16 +352,62 @@ let physicsStep (cfg: PhysicsConfig) (dt: Time) (bodies: PhysicsBody list) =
         )
 
     let cleared =
-        moved |> List.map (fun b -> { b with state = InAir })
+        moved |> List.map (fun b -> 
+            // Проверяем, находится ли тело уже на земле и не движется ли вверх
+            // Это предотвращает "прыжки в воздухе"
+            match b.state with
+            | OnGround when b.speed.Y = 0.0 -> 
+                // Оставляем OnGround, если тело уже на земле и не движется вверх
+                b
+            | _ -> 
+                { b with state = InAir }
+        )
 
-    let resolved =
+    // Разделяем коллизии на вертикальные и горизонтальные
+    let verticalCollisions, horizontalCollisions =
         collisions
+        |> List.partition (fun col -> col.Normal.Y <> 0.0)
+
+    // Сначала обрабатываем вертикальные коллизии (особенно с полом)
+    let verticallyResolved =
+        verticalCollisions
+        |> List.fold (fun bs col ->
+            bs |> List.map (fun b ->
+                if b.id = col.A then
+                    // Определяем, кто из тел - пол (статический)
+                    let otherBody = 
+                        cleared |> List.find (fun o -> o.id = col.B)
+                    
+                    if otherBody.bodyType = Static && col.Normal.Y < 0.0 then
+                        // Это коллизия с полом
+                        let floorRect = RectUtils.absolute otherBody.pos col.ColliderB
+                        resolveGroundCollision b col.Normal floorRect
+                    else
+                        resolve b col.Normal
+                elif b.id = col.B then
+                    let otherBody = 
+                        cleared |> List.find (fun o -> o.id = col.A)
+                    
+                    if otherBody.bodyType = Static && col.Normal.Y > 0.0 then
+                        // Это коллизия с полом (для второго тела нормаль инвертирована)
+                        let floorRect = RectUtils.absolute otherBody.pos col.ColliderA
+                        let invertedNormal = { col.Normal with X = -col.Normal.X; Y = -col.Normal.Y }
+                        resolveGroundCollision b invertedNormal floorRect
+                    else
+                        resolve b { col.Normal with X = -col.Normal.X; Y = -col.Normal.Y }
+                else b)
+        ) cleared
+
+    // Затем обрабатываем горизонтальные коллизии
+    let resolved =
+        horizontalCollisions
         |> List.fold (fun bs col ->
             bs |> List.map (fun b ->
                 if b.id = col.A then resolve b col.Normal
                 elif b.id = col.B then resolve b { col.Normal with X = -col.Normal.X; Y = -col.Normal.Y }
                 else b)
-        ) cleared
-    // printfn "%A" resolved
+        ) verticallyResolved
+
     { Bodies = resolved; Collisions = collisions }
+
 let nextPhysFrame dt bodies = physicsStep (defaultConfig ()) dt bodies
