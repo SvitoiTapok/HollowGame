@@ -72,7 +72,7 @@ let handleEvents character Ilist =
         | _ -> acc) character Ilist 
 
 let makePlayerWalkRight  character player = 
-    if character.IsWalkingRight then {player with speed={X = 1000.0; Y = player.speed.Y}}
+    if character.IsWalkingRight then {player with speed={X = 1000.0; Y = player.speed.Y; }}
     else player
 let makePlayerWalkLeft  character player = 
     if character.IsWalkingLeft then {player with speed={X = -1000; Y = player.speed.Y}}
@@ -82,7 +82,8 @@ let makePlayerJump  character player =
     if character.IsJumping && not character.IsInAir then {player with speed={X = player.speed.X; Y = -1000}}
     else player
 let makePlayerMove player character= 
-    makePlayerWalkRight character player |> makePlayerWalkLeft character |> makePlayerJump character
+    let player = {player with PhysicalObject=makePlayerWalkRight character player.PhysicalObject |> makePlayerWalkLeft character |> makePlayerJump character}
+    {player with GraphicObject=if abs player.PhysicalObject.speed.X < 0.02 then changeGameObjectAnimation player.GraphicObject "Standing" else changeGameObjectAnimation player.GraphicObject "Run"}
 
     
 
@@ -98,9 +99,9 @@ let rec doFrame gameState =
         IsInAir = if player.PhysicalObject.state=InAir then true else false
     }
     let newCharacter = gameState.InputHandler.CollectEvents() |> handleEvents character
-    let newPlayer = makePlayerMove player.PhysicalObject newCharacter
+    let newPlayer = makePlayerMove player newCharacter
     let camera = followingCamera gameState.Camera player 0.0001f
-    {gameState with GameObjects = bodies |> List.map(fun x -> if x.PhysicalObject.name="Player" then {x with PhysicalObject=newPlayer} else x); Camera = camera}
+    {gameState with GameObjects = bodies |> List.map(fun x -> if x.PhysicalObject.name="Player" then newPlayer else x); Camera = camera}
 
 
     //Raylib.DrawText("Sprite Animation Demo", 10, 10, 20, Color.Black)
