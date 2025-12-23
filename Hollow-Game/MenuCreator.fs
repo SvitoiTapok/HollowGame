@@ -16,8 +16,8 @@ let makeMenuButtons () =
         {
             Bounds = { 
                 Point = {
-                    X = 700
-                    Y = 100
+                    X = 600
+                    Y = 300
                     Z = 0f
                 }
                 Layer = 0
@@ -33,7 +33,7 @@ let makeMenuButtons () =
         {
             Bounds = { 
                 Point = {
-                    X = 700
+                    X = 600
                     Y = 500
                     Z = 0f
                 }

@@ -36,7 +36,23 @@ let makeGameObject point layer w h animations color currentAnimationName id name
             colliders = coliders
         }
     }
-
+let downloadBackground () =
+    let back = 
+        [| "resources/background.png";  |]
+        |> fun frames -> loadAnimation frames 1
+    let background = Map.add "background" back Map.empty
+    let color = newColor 255uy 255uy 255uy 255uy
+    let point = newPoint -5000 -7000 10f
+    let coliders=   [
+            {
+                Offset = v2 0.0 0.0
+                Size = v2 100.0 100.0
+                Kind = Solid
+                Response = Ignore
+                Name = "Ground"
+            }
+        ]
+    makeGameObject point 4 30000 20000 background color "background" 2 "background" Static (v2 -5000 -7000) (v2 0.0 0.0) (v2 0.0 0.0) InAir coliders
 
 let makeWall (point: Point) w h animation id name=
     let color = newColor 255uy 255uy 255uy 255uy
@@ -63,7 +79,7 @@ let makeGorisontalPlatform x y idOffset len platpormList=
     List.concat [platpormList; List.concat [[makeWall (newPoint (int x) (int y) 0.0f) 64 64 animation2 (idOffset) "Wall"]; platformList; [makeWall (newPoint (int x+(len-1)*64) (int y) 0.0f) 64 64 animation3 (idOffset+len-1) "Wall"]]]
 
 
-let LoadGameObjects animationMap = 
+let LoadGameObjects ()= 
 
     let playerRunAnim  = [| "resources/green_run_1.png"; "resources/green_run_2.png"|] |> fun frames -> loadAnimation frames 10
     let playerStandingAnim = [| "resources/green_standing.png"; |] |> fun frames -> loadAnimation frames 1
@@ -72,20 +88,6 @@ let LoadGameObjects animationMap =
         |> Map.add "Run" playerRunAnim
         |> Map.add "Standing" playerStandingAnim
     let color = newColor 255uy 255uy 255uy 255uy
-    let sprite1 = DrawableObject {
-        Point = {
-            X = 0
-            Y = 0
-            Z = 0f
-        }
-        Layer = 0
-        W = 400
-        H = 300
-        Animations = animationMap
-        Color = color
-        CurrentAnimationName = "Attack"
-        MirroredByHorizontal = false
-    }
     let sprite2 = DrawableObject {
         Point = {
             X = 0
@@ -100,25 +102,6 @@ let LoadGameObjects animationMap =
         CurrentAnimationName = "Run"
         MirroredByHorizontal = false
     }
-    // let platform: PhysicsBody = {
-    //     id = 3
-    //     name = "Ground"
-    //     bodyType = Static
-    //     pos = v2 100.0 360.0
-    //     speed = v2 0.0 0.0
-    //     acc = v2 0.0 0.0
-    //     state = InAir
-    //     colliders =
-    //         [
-    //             {
-    //                 Offset = v2 0.0 0.0
-    //                 Size = v2 100.0 100.0
-    //                 Kind = Solid
-    //                 Response = Block
-    //                 Name = "Ground"
-    //             }
-    //         ]
-    // }
     let body = {
         id = 1
         name = "Player"
@@ -138,8 +121,42 @@ let LoadGameObjects animationMap =
                 }
             ]
     }
+    let greenDoorAnimation = [| "resources/green_door2.png"; |] |> fun frames -> loadAnimation frames 1
+    let gd = DrawableObject {
+        Point = {
+            X = 3200 
+            Y = 900-64-1300
+            Z = 0f
+        }
+        Layer = 0
+        W = 150
+        H = 200
+        Animations = (Map.add "default" greenDoorAnimation Map.empty)
+        Color = color
+        CurrentAnimationName = "default"
+        MirroredByHorizontal = false
+    }
+    let gdPhis = {
+        id = 3
+        name = "Exit"
+        bodyType = Static
+        pos = v2 3200 (float (900 - 64 - 1300))
+        speed = v2 0.0 0.0
+        acc = v2 1.0 0.0
+        state = InAir
+        colliders =
+            [
+                {
+                    Offset = v2 0.0 0.0
+                    Size = v2 150 200
+                    Kind = Solid
+                    Response = Block
+                    Name = "Exit"
+                }
+            ]
+    }
+    let obj1 = makeGameObjectSimple gd gdPhis
     let animation: Animation = [| "resources/ground_floor.png"; |] |> fun frames -> loadAnimation frames 1
-    printfn "Creating ground objects"
     let groundList = List.init 101 (fun i ->
         makeWall (newPoint (64 * i) (900-64) 0.0f) 64 64 animation (i + 10) "Wall"
     )  
@@ -157,7 +174,7 @@ let LoadGameObjects animationMap =
     ) 
     let animation: Animation = [| "resources/ground_floor.png"; |] |> fun frames -> loadAnimation frames 1
     let obj2 = makeGameObjectSimple sprite2 body
-    let platformList =  List.concat [[obj2]; groundList; rightWallList; leftWall; ceilList;]
+    let platformList =  List.concat [[obj1; obj2]; groundList; rightWallList; leftWall; ceilList;]
     let platformList = makeGorisontalPlatform 300 (900-64-200) 410 10 platformList
     let platformList = makeGorisontalPlatform 500 (900-64-500) 430 20 platformList
     let platformList = makeGorisontalPlatform 2500 (900-64-550) 450 20 platformList

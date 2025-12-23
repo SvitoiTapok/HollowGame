@@ -2,6 +2,7 @@
 open Raylib_cs
 open System.Numerics
 open DeathSceneCreator
+open WinSceneCreator
 open Animation
 open MainLoop
 open PhysicsEngine
@@ -12,85 +13,12 @@ open InputHandler
 open Button
 open MenuCreator
 open Enemy
+open Attack
 
-let spawnAttack (startPoint:Point) (targetPoint:Point) w h animations currentAnimationName id = 
-    let color = newColor 255uy 255uy 255uy 255uy
-    let dx = float (targetPoint.X -  startPoint.X)
-    let dy = float (targetPoint.Y -  startPoint.Y)
-    let len = (dx**2+dy**2)**0.5
-    let rel = len/1500.0
-    let vx = dx/rel
-    let vy = dy/rel
-    makeGameObject startPoint 0 w h animations color currentAnimationName id "attackParticle" Kinematic (v2 startPoint.X startPoint.Y) (v2 vx vy)  (v2 0.0 0.0) InAir [
-        {
-            Offset = v2 (float w /4.0) (float h/4.0)
-            Size = v2 (float w /2.0) (float h/2.0)
-            Kind = Trigger
-            Response = Overlap
-            Name = "attackParticle"
-        }
-    ]
-    
-let loadBaseAnimation () = 
-    let animation = 
-        [| "resources/startButton.png";  |]
-        |> fun frames -> loadAnimation frames 10
-    Map.add "base" animation Map.empty
 
 let toBool (x: CBool) : bool = x = CBool.op_Implicit true
 
-let downloadBackground () =
-    let back = 
-        [| "resources/background.png";  |]
-        |> fun frames -> loadAnimation frames 1
-    let background = Map.add "background" back Map.empty
-    let color = newColor 255uy 255uy 255uy 255uy
-    let point = newPoint -5000 -7000 10f
-    let coliders=   [
-            {
-                Offset = v2 0.0 0.0
-                Size = v2 100.0 100.0
-                Kind = Solid
-                Response = Ignore
-                Name = "Ground"
-            }
-        ]
-    makeGameObject point 4 30000 20000 background color "background" 2 "background" Static (v2 -5000 -7000) (v2 0.0 0.0) (v2 0.0 0.0) InAir coliders
 
-let downloadDeathScene() =
-    let d = 
-        [| "resources/death_scene.png";  |]
-        |> fun frames -> loadAnimation frames 1
-    let dd = Map.add "deathScene" d Map.empty
-    let color = newColor 255uy 255uy 255uy 255uy
-    let point = newPoint 0 0 0f
-    let coliders=   [
-            {
-                Offset = v2 0.0 0.0
-                Size = v2 100.0 100.0
-                Kind = Solid
-                Response = Ignore
-                Name = "Ground"
-            }
-        ]
-    makeGameObject point 3 1500 1000 dd color "deathScene" 2 "deathScene" Static (v2 0 0) (v2 0.0 0.0) (v2 0.0 0.0) InAir coliders
-let downloadWinScene() =
-    let d = 
-        [| "resources/win_scene.png";  |]
-        |> fun frames -> loadAnimation frames 1
-    let dd = Map.add "deathScene" d Map.empty
-    let color = newColor 255uy 255uy 255uy 255uy
-    let point = newPoint 0 0 0f
-    let coliders=   [
-            {
-                Offset = v2 0.0 0.0
-                Size = v2 100.0 100.0
-                Kind = Solid
-                Response = Ignore
-                Name = "Ground"
-            }
-        ]
-    makeGameObject point 3 1500 1000 dd color "deathScene" 2 "deathScene" Static (v2 0 0) (v2 0.0 0.0) (v2 0.0 0.0) InAir coliders
 
 let followingCamera (camera: Camera) (gameObject: GameObject) dSpeed = 
     let EPSILON = single 1e-2
@@ -182,6 +110,8 @@ let collisionHandler gameState collisions =
             let delBlist = List.removeAt (List.findIndex (fun y -> y.PhysicalObject.id=x.B) delAlist) delAlist
             printfn "%A" (delBlist |> List.filter (fun x -> not (x.PhysicalObject.name ="Wall")))
             {acc with GameObjects=delBlist}
+        | _ when x.AName="Exit" && x.BName="Player" || x.AName="Player" && x.BName="Exit" -> 
+            {acc with GameMode = SetUpWinScene}
         | _ -> acc) gameState collisions 
 let doFrame gameState =
     // Получаем игрока
@@ -209,7 +139,7 @@ let doFrame gameState =
         IsWalkingRight = false
         IsJumping = false
         IsInAir = if player.PhysicalObject.state=InAir then true else false
-        IsAttacking = (false, newPoint 0 0 0.0f)
+        IsAttacking = false, newPoint 0 0 0.0f
     }
     let newCharacter = gameState.InputHandler.CollectEvents() |> handleEvents character
     let (newPlayer: GameObject, projectile) = makePlayerMove player newCharacter gameState.GameObjects
@@ -232,7 +162,6 @@ let setUpMenu gameState =
 
     { gameState with GameMode = state }
 
-// Функция для создания нескольких врагов на карте
 let createEnemiesOnMap () =
     let enemyPositions = [
         v2 1000.0 0.0
@@ -254,7 +183,7 @@ let createEnemiesOnMap () =
 
 let loadMainLoop gameState = 
     // Загружаем игровые объекты
-    let baseGameObjects = LoadGameObjects (loadBaseAnimation ()) @ [downloadBackground ()]
+    let baseGameObjects = LoadGameObjects () @ [downloadBackground ()]
 
     
     // Создаем врагов
@@ -286,14 +215,14 @@ let doDeathScene gameState =
     { gameState with GameMode = state }
 
 let setUpWinScene gameState = 
-    let buttons = createDeathScene ()
+    let buttons = createWinScene ()
     {
-        GameMode = DeathScene;
+        GameMode = WinScene;
         FpsCount = gameState.FpsCount;
         Buttons = buttons
         Camera = newMovableDepthCamera 0 0 1500 1000 0.001f 0.001f 1000f 0.0f
 
-        GameObjects = [downloadDeathScene ()]
+        GameObjects = [downloadWinScene ()]
         InputHandler = gameState.InputHandler
     }
 let doWinScene gameState = 
@@ -317,7 +246,8 @@ let rec doGameLoop gameState =
             | MainLoop -> doFrame gameState
             | DeathScene -> doDeathScene gameState
             | SetUpDeathScene -> setUpDeathScene gameState
-            | WinScene -> setUpWinScene gameState
+            | SetUpWinScene -> setUpWinScene gameState
+            | WinScene -> doWinScene gameState
             | _ -> gameState
         
         doGameLoop newGameState
@@ -330,7 +260,6 @@ let main argv =
     let InputHandler = InputHandler()
     
     // Загрузка анимации
-    let map = loadBaseAnimation ()
     let camera = newMovableDepthCamera 0 0 1500 1000 0.001f 0.001f 1000f 0.0f
 
     let buttons = makeMenuButtons ()

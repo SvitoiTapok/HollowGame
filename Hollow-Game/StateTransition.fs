@@ -41,6 +41,19 @@ let handleTransition currentState buttons event =
                 LoadMainLoop            
             | _ -> currentState
         | None -> currentState
+     | WinScene, MouseClick(x, y, button) ->
+        // Проверяем клик по элементам меню
+        let clickedItem = 
+            buttons
+            |> List.tryFind (fun item -> toBool (Raylib.CheckCollisionPointRec(Vector2(float32 x, float32 y), menuButtonToRect item)))
+        //printfn "%A" clickedItem
+        match clickedItem with
+        | Some item ->
+            match item.ButtonType with
+            | StartGame -> 
+                LoadMainLoop            
+            | _ -> currentState
+        | None -> currentState
     | _ -> currentState
     // | Gameplay, KeyPressed key when key = int KeyboardKey.Escape ->
     //     // Пауза при нажатии ESC

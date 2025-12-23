@@ -16,6 +16,7 @@
     <Compile Include="DeathSceneCreator.fs" />
     <Compile Include="WinSceneCreator.fs" />
     <Compile Include="StateTransition.fs" />
+        <Compile Include="Attack.fs" />
     <Compile Include="Enemy.fs" />
  
     <Compile Include="Program.fs" />
