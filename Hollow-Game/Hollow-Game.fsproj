@@ -7,19 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-
-
-      <Compile Include="Mainloop.fs" />
-            <Compile Include="Button.fs" />
-      <Compile Include="GameObjectLoader.fs" />
-            <Compile Include="InputHandler.fs" />
-                  <Compile Include="GameState.fs" />
-                  <Compile Include="MenuCreator.fs" />
-        <Compile Include="StateTransition.fs" />
-
+    <Compile Include="Mainloop.fs" />
+    <Compile Include="Button.fs" />
+    <Compile Include="GameObjectLoader.fs" />
+    <Compile Include="InputHandler.fs" />
+    <Compile Include="GameState.fs" />
+    <Compile Include="MenuCreator.fs" />
+    <Compile Include="StateTransition.fs" />
+    <Compile Include="Enemy.fs" />
     <Compile Include="Program.fs" />
-
-
   </ItemGroup>
 
   <ItemGroup>
