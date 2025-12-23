@@ -232,6 +232,27 @@ type Collision =
         ColliderB: RelativeRect
     }
 
+let detectAllCollisions (a: PhysicsBody) (b: PhysicsBody) =
+    a.colliders
+    |> List.collect (fun ca ->
+        b.colliders
+        |> List.choose (fun cb ->
+            let ra = RectUtils.absolute a.pos ca
+            let rb = RectUtils.absolute b.pos cb
+            RectUtils.penetration ra rb
+            |> Option.map (fun n ->
+                {
+                    A = a.id
+                    B = b.id
+                    AName = a.name
+                    BName = b.name
+                    Normal = n
+                    ColliderA = ca
+                    ColliderB = cb
+                })
+        )
+    )
+
 let detectCollisions (a: PhysicsBody) (b: PhysicsBody) =
     a.colliders
     |> List.collect (fun ca ->
@@ -412,6 +433,18 @@ let physicsStep (cfg: PhysicsConfig) (dt: Time) (bodies: PhysicsBody list) =
                 else b)
         ) verticallyResolved
 
-    { Bodies = resolved; Collisions = collisions }
+    { 
+        Bodies = resolved; 
+        Collisions =  
+        moved
+            |> List.collect (fun b ->
+                b.colliders
+                |> List.collect (fun c ->
+                    Grid.query (RectUtils.absolute b.pos c) grid
+                    |> List.filter (fun o -> o.id > b.id)
+                    |> List.collect (detectAllCollisions b)
+                )
+            )
+    }
 
 let nextPhysFrame dt bodies = physicsStep (defaultConfig ()) dt bodies
