@@ -72,17 +72,17 @@ let handleEvents character Ilist =
         | _ -> acc) character Ilist 
 
 let makePlayerWalkRight  character player = 
-    if character.IsWalkingRight then {player with speed={X = 1000.0; Y = player.speed.Y; }}
+    if character.IsWalkingRight then {player with PhysicalObject = {player.PhysicalObject with speed={X = 1000.0; Y = player.PhysicalObject.speed.Y; }}; GraphicObject = setMirroredByHorizontal player.GraphicObject true}
     else player
 let makePlayerWalkLeft  character player = 
-    if character.IsWalkingLeft then {player with speed={X = -1000; Y = player.speed.Y}}
+    if character.IsWalkingLeft then {player with PhysicalObject = {player.PhysicalObject with speed={X = -1000.0; Y = player.PhysicalObject.speed.Y; }}; GraphicObject = setMirroredByHorizontal player.GraphicObject false}
     else player
 
 let makePlayerJump  character player = 
-    if character.IsJumping && not character.IsInAir then {player with speed={X = player.speed.X; Y = -1000}}
+    if character.IsJumping && not character.IsInAir then {player with PhysicalObject = {player.PhysicalObject with speed={X = player.PhysicalObject.speed.X; Y = -1000}}}
     else player
 let makePlayerMove player character= 
-    let player = {player with PhysicalObject=makePlayerWalkRight character player.PhysicalObject |> makePlayerWalkLeft character |> makePlayerJump character}
+    let player = makePlayerWalkRight character player |> makePlayerWalkLeft character |> makePlayerJump character
     let hasStoppedRunning = abs player.PhysicalObject.speed.X < 0.2 && getCurrentAnimation player.GraphicObject = "Run"
     let hasStartedRunning = abs player.PhysicalObject.speed.X > 0.2 && getCurrentAnimation player.GraphicObject = "Standing"
     if hasStoppedRunning then { player with GraphicObject = changeGameObjectAnimation player.GraphicObject "Standing" }

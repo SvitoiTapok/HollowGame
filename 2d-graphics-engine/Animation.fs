@@ -63,7 +63,8 @@ type DrawableObject =
       H: int
       Color: Color
       Animations: Map<string, Animation>
-      CurrentAnimationName: string }
+      CurrentAnimationName: string
+      MirroredByHorizontal: bool }
 
  
 type TextAlign =
@@ -96,10 +97,10 @@ type GraphicObject =
            W: int
            H: int |}
 
-let newDrawableObject (point: Point) (layer: int) (w: int) (h: int) (color: Color) (animations: Map<string, Animation>) (currentAnimationName: string) = 
+let newDrawableObject (point: Point) (layer: int) (w: int) (h: int) (color: Color) (animations: Map<string, Animation>) (currentAnimationName: string) (mirrored: bool) = 
     DrawableObject { Point = point; Layer = layer; 
         W = w; H = h; Color = color; 
-        Animations = animations; CurrentAnimationName = currentAnimationName }
+        Animations = animations; CurrentAnimationName = currentAnimationName; MirroredByHorizontal = mirrored }
 
 let newTextObject (text: string) (font: Font) (fontSize: int) (spacing: single) (color: Color) (point: Point) (level: int) (align: TextAlign) =
     TextObject { Text = text; Font = font; FontSize = fontSize; Spacing = spacing; Color = color; Point = point; Level = level; Align = align }
@@ -119,6 +120,20 @@ let rec getLevel (gpaphicObject: GraphicObject) =
     | TextObject text -> text.Level
     | RelativeGraphicObject obj -> getLevel obj.Object
     | MaskedGraphicObject masked -> getLevel masked.Object
+    | _ -> 0
+
+let rec setMirroredByHorizontal (gpaphicObject: GraphicObject) (isMirrored: bool)= 
+    match gpaphicObject with
+        | DrawableObject obj -> DrawableObject {obj with MirroredByHorizontal = isMirrored}
+        | RelativeGraphicObject obj -> RelativeGraphicObject {| obj with Object = setMirroredByHorizontal obj.Object isMirrored |}
+        | MaskedGraphicObject masked ->  MaskedGraphicObject {| masked with Object = setMirroredByHorizontal masked.Object isMirrored |}
+        | _ -> gpaphicObject
+let rec isMirroredByHorizontal (gpaphicObject: GraphicObject) = 
+    match gpaphicObject with
+    | DrawableObject obj -> obj.MirroredByHorizontal
+    | RelativeGraphicObject obj -> isMirroredByHorizontal obj.Object
+    | MaskedGraphicObject masked -> isMirroredByHorizontal masked.Object
+    | _ -> false
 
 let private toRaylibColor (color: Color) =
     Raylib_cs.Color(color.R, color.G, color.B, color.Alpha)
@@ -231,8 +246,9 @@ let worldToScreen (camera: Camera) (graphicObject: GraphicObject) (calculateScal
       Z = p.Z },
     scale
 
-let drawTexture (texture: Texture2D) (width: int) (height: int) (point: Point) (color: Color) =
-    let sourceRec = Rectangle(0.0f, 0.0f, float32 texture.Width, float32 texture.Height)
+let drawTexture (texture: Texture2D) (width: int) (height: int) (point: Point) (color: Color) (isMirroredByHorizontal: bool) =
+    let modifier = if isMirroredByHorizontal then -1 else 1
+    let sourceRec = Rectangle(0.0f, 0.0f, float32 (modifier * texture.Width), float32 texture.Height)
 
     let destRec =
         Rectangle(float32 point.X, float32 point.Y, float32 width, float32 height)
@@ -247,7 +263,7 @@ let drawDrawableObject (object: DrawableObject) (camera: Camera) =
 
     let scaledW = int (float32 object.W * scale)
     let scaledH = int (float32 object.H * scale)
-    drawTexture currentTexture scaledW scaledH screenPoint object.Color
+    drawTexture currentTexture scaledW scaledH screenPoint object.Color object.MirroredByHorizontal
 
 let drawMask
     (masked:
@@ -268,7 +284,7 @@ let drawMask
           B = 255uy
           Alpha = 255uy }
 
-    drawTexture masked.Mask scaledW scaledH screenPoint whiteColor
+    drawTexture masked.Mask scaledW scaledH screenPoint whiteColor false
 
 
 let createMask (object: GraphicObject) (colorCalculator: Point -> Color) =

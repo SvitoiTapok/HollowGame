@@ -21,6 +21,7 @@ let makeGameObject point layer w h animations color currentAnimationName id name
             Animations = animations
             Color = color
             CurrentAnimationName = currentAnimationName
+            MirroredByHorizontal = false
         }
         PhysicalObject = {
             id = id
@@ -59,19 +60,20 @@ let LoadGameObjects animationMap gameObjects =
         |> Map.add "Run" playerRunAnim
         |> Map.add "Standing" playerStandingAnim
     let color = newColor 255uy 255uy 255uy 255uy
-    // let sprite1 = DrawableObject {
-    //     Point = {
-    //         X = 0
-    //         Y = 0
-    //         Z = 0f
-    //     }
-    //     Layer = 0
-    //     W = 400
-    //     H = 300
-    //     Animations = animationMap
-    //     Color = color
-    //     CurrentAnimationName = "Attack"
-    // }
+    let sprite1 = DrawableObject {
+        Point = {
+            X = 0
+            Y = 0
+            Z = 0f
+        }
+        Layer = 0
+        W = 400
+        H = 300
+        Animations = animationMap
+        Color = color
+        CurrentAnimationName = "Attack"
+        MirroredByHorizontal = false
+    }
     let sprite2 = DrawableObject {
         Point = {
             X = 0
@@ -84,6 +86,7 @@ let LoadGameObjects animationMap gameObjects =
         Animations = playerAnnimationMap
         Color = color
         CurrentAnimationName = "Run"
+        MirroredByHorizontal = false
     }
     // let platform: PhysicsBody = {
     //     id = 3
