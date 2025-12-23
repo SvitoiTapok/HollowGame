@@ -125,7 +125,7 @@ let doFrame gameState spawnTimer remainingPositions nextEnemyId =
     let dt = 1.0 / float gameState.FpsCount
     
      
-    let spawnInterval = 10.0  
+    let spawnInterval = 2.0  
     let (newSpawnTimer, newEnemy, newRemainingPositions, newNextEnemyId) =
         if spawnTimer >= spawnInterval && not (List.isEmpty remainingPositions) then
              
@@ -214,14 +214,11 @@ let loadMainLoop gameState =
     
      
     let remainingSpawnPositions = [
-        v2 2000.0 -100.0
-        v2 3000.0 0.0
-        v2 4000.0 -200.0
-        v2 -1000.0 0.0
-        v2 1500.0 -300.0
-        v2 2500.0 -150.0
-        v2 3500.0 -250.0
-        v2 500.0 -200.0
+        v2 1000.0 570.0
+        v2 2000.0 100.0
+        v2 3000.0 2000.0
+        v2 4000.0 4000.0
+        v2 500.0 300.0
     ]
     
     { gameState with 
