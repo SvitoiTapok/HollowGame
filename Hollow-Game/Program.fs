@@ -83,8 +83,11 @@ let makePlayerJump  character player =
     else player
 let makePlayerMove player character= 
     let player = {player with PhysicalObject=makePlayerWalkRight character player.PhysicalObject |> makePlayerWalkLeft character |> makePlayerJump character}
-    {player with GraphicObject=if abs player.PhysicalObject.speed.X < 0.02 then changeGameObjectAnimation player.GraphicObject "Standing" else changeGameObjectAnimation player.GraphicObject "Run"}
-
+    let hasStoppedRunning = abs player.PhysicalObject.speed.X < 0.2 && getCurrentAnimation player.GraphicObject = "Run"
+    let hasStartedRunning = abs player.PhysicalObject.speed.X > 0.2 && getCurrentAnimation player.GraphicObject = "Standing"
+    if hasStoppedRunning then { player with GraphicObject = changeGameObjectAnimation player.GraphicObject "Standing" }
+    else if hasStartedRunning then {player with GraphicObject = changeGameObjectAnimation player.GraphicObject "Run" }
+    else player
     
 
 let rec doFrame gameState =
