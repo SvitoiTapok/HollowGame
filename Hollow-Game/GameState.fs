@@ -24,4 +24,4 @@ type GameState = {
     Camera: Camera
     InputHandler: InputHandler
     GameObjects: GameObject list
-}a
+}
