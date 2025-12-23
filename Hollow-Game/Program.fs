@@ -13,31 +13,6 @@ open Button
 open MenuCreator
 open Enemy
 
-// let continueAttack attack = 
-//     let targetX = single attack.Target.X 
-//     let targetY = single attack.Target.Y
-//     let gameObjectX = single (getPointOfGraphicObject attack.GameObject.GraphicObject).X
-//     let gameObjectY = single (getPointOfGraphicObject attack.GameObject.GraphicObject).Y
-
-//     let newX = gameObjectX + (targetX - gameObjectX) * attack.Speed
-//     let newY = gameObjectY + (targetY - gameObjectY) * attack.Speed
-
-//     let p = newPoint (int newX) (int newY) 0.0f
-
-//     { attack with 
-//         GameObject = {attack.GameObject with GraphicObject = setPointToGraphicObjectPoint attack.GameObject.GraphicObject p }}
-
-// let attackHasCame attack =
-//     let targetX = single attack.Target.X 
-//     let targetY = single attack.Target.Y
-//     let gameObjectX = single (getPointOfGraphicObject attack.GameObject.GraphicObject).X
-//     let gameObjectY = single (getPointOfGraphicObject attack.GameObject.GraphicObject).Y
-
-//     let newX = gameObjectX + (targetX - gameObjectX) * attack.Speed
-//     let newY = gameObjectY + (targetY - gameObjectY) * attack.Speed
-//     let EPSILON = single 10
-//     abs (newX - targetX) < EPSILON && abs (newY - targetY) < EPSILON
-
 let spawnAttack (startPoint:Point) (targetPoint:Point) w h animations currentAnimationName id = 
     let color = newColor 255uy 255uy 255uy 255uy
     let dx = float (targetPoint.X -  startPoint.X)
@@ -48,8 +23,8 @@ let spawnAttack (startPoint:Point) (targetPoint:Point) w h animations currentAni
     let vy = dy/rel
     makeGameObject startPoint 0 w h animations color currentAnimationName id "attackParticle" Kinematic (v2 startPoint.X startPoint.Y) (v2 vx vy)  (v2 0.0 0.0) InAir [
         {
-            Offset = v2 0.0 0.0
-            Size = v2 w h
+            Offset = v2 (float w /4.0) (float h/4.0)
+            Size = v2 (float w /2.0) (float h/2.0)
             Kind = Trigger
             Response = Overlap
             Name = "attackParticle"
@@ -99,6 +74,24 @@ let downloadDeathScene() =
             }
         ]
     makeGameObject point 3 1500 1000 dd color "deathScene" 2 "deathScene" Static (v2 0 0) (v2 0.0 0.0) (v2 0.0 0.0) InAir coliders
+let downloadWinScene() =
+    let d = 
+        [| "resources/win_scene.png";  |]
+        |> fun frames -> loadAnimation frames 1
+    let dd = Map.add "deathScene" d Map.empty
+    let color = newColor 255uy 255uy 255uy 255uy
+    let point = newPoint 0 0 0f
+    let coliders=   [
+            {
+                Offset = v2 0.0 0.0
+                Size = v2 100.0 100.0
+                Kind = Solid
+                Response = Ignore
+                Name = "Ground"
+            }
+        ]
+    makeGameObject point 3 1500 1000 dd color "deathScene" 2 "deathScene" Static (v2 0 0) (v2 0.0 0.0) (v2 0.0 0.0) InAir coliders
+
 let followingCamera (camera: Camera) (gameObject: GameObject) dSpeed = 
     let EPSILON = single 1e-2
     let point = getPointOfGraphicObject gameObject.GraphicObject
@@ -292,6 +285,26 @@ let doDeathScene gameState =
 
     { gameState with GameMode = state }
 
+let setUpWinScene gameState = 
+    let buttons = createDeathScene ()
+    {
+        GameMode = DeathScene;
+        FpsCount = gameState.FpsCount;
+        Buttons = buttons
+        Camera = newMovableDepthCamera 0 0 1500 1000 0.001f 0.001f 1000f 0.0f
+
+        GameObjects = [downloadDeathScene ()]
+        InputHandler = gameState.InputHandler
+    }
+let doWinScene gameState = 
+    let buttonsGraph = gameState.Buttons |> List.map (fun x -> DrawableObject x.Bounds)
+    let background = gameState.GameObjects |> List.map (fun x -> x.GraphicObject)
+
+    drawAllVisibleObjects (List.concat [buttonsGraph; background] |> List.toArray) gameState.Camera
+    let states = gameState.InputHandler.CollectEvents() |> List.map(fun x -> handleTransition gameState.GameMode gameState.Buttons x) |> List.filter(fun x -> not (x = gameState.GameMode))
+    let state = if states |> List.length = 1 then states |> List.head else gameState.GameMode
+
+    { gameState with GameMode = state } 
 let rec doGameLoop gameState =
     if toBool (Raylib.WindowShouldClose()) then
         ()
@@ -304,6 +317,7 @@ let rec doGameLoop gameState =
             | MainLoop -> doFrame gameState
             | DeathScene -> doDeathScene gameState
             | SetUpDeathScene -> setUpDeathScene gameState
+            | WinScene -> setUpWinScene gameState
             | _ -> gameState
         
         doGameLoop newGameState

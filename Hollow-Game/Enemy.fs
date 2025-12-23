@@ -10,7 +10,7 @@ type EnemyType = {
     WalkSpeed: float
     JumpForce: float
     DetectionRange: float
-    TexturePath: string
+    TexturePath: array<string> 
     Width: int
     Height: int
     ColliderSize: V2
@@ -21,7 +21,7 @@ let DefaultEnemy = {
     WalkSpeed = 400.0
     JumpForce = 1000.0
     DetectionRange = 500.0
-    TexturePath = "resources/brown_run_1.png"
+    TexturePath = [|"resources/brown_run_1.png"; "resources/brown_run_2.png"|]
     Width = 96
     Height = 96
     ColliderSize = v2 64 96
@@ -31,7 +31,7 @@ let DefaultEnemy = {
 // Загрузка анимаций врага
 let loadEnemyAnimation enemyType =
     let animation = 
-        [| enemyType.TexturePath |]
+        enemyType.TexturePath
         |> fun frames -> loadAnimation frames 10
     Map.add "Idle" animation Map.empty
 

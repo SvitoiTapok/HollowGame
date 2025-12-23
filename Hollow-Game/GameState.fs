@@ -14,6 +14,7 @@ type GameMode =
     | SelectionMode
     | LoadMainLoop
     | SetUpDeathScene
+    | WinScene
 
 type GameState = {
     GameMode: GameMode
