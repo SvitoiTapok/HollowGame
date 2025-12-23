@@ -26,6 +26,7 @@ let makeMenuButtons () =
                 Animations = startButtonMap
                 Color = color
                 CurrentAnimationName = "startButton"
+                MirroredByHorizontal = false
             }
             ButtonType = StartGame
         }
@@ -42,6 +43,7 @@ let makeMenuButtons () =
                 Animations = exitButtonMap
                 Color = color
                 CurrentAnimationName = "exitButton"
+                MirroredByHorizontal = false
             }
             ButtonType = Exit
         }
