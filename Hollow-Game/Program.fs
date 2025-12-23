@@ -12,11 +12,43 @@ open Button
 open MenuCreator
 
 
+let continueAttack attack = 
+    let targetX = single attack.Target.X 
+    let targetY = single attack.Target.Y
+    let gameObjectX = single (getPointOfGraphicObject attack.GameObject.GraphicObject).X
+    let gameObjectY = single (getPointOfGraphicObject attack.GameObject.GraphicObject).Y
+
+    let newX = gameObjectX + (targetX - gameObjectX) * attack.Speed
+    let newY = gameObjectY + (targetY - gameObjectY) * attack.Speed
+
+    let p = newPoint (int newX) (int newY) 0.0f
+
+    { attack with 
+        GameObject = {attack.GameObject with GraphicObject = setPointToGraphicObjectPoint attack.GameObject.GraphicObject p }}
+
+let attackHasCame attack =
+    let targetX = single attack.Target.X 
+    let targetY = single attack.Target.Y
+    let gameObjectX = single (getPointOfGraphicObject attack.GameObject.GraphicObject).X
+    let gameObjectY = single (getPointOfGraphicObject attack.GameObject.GraphicObject).Y
+
+    let newX = gameObjectX + (targetX - gameObjectX) * attack.Speed
+    let newY = gameObjectY + (targetY - gameObjectY) * attack.Speed
+    let EPSILON = single 10
+    abs (newX - targetX) < EPSILON && abs (newY - targetY) < EPSILON
+
+let spawnAttack startPoint targetPoint w h animations currentAnimationName id speed= 
+    let color = newColor 255uy 255uy 255uy 255uy
+    {
+        GameObject = makeGameObject startPoint 0 w h animations color currentAnimationName id "attackParticle" Static (v2 0.0 0.0) (v2 0.0 0.0)  (v2 0.0 0.0) InAir []
+        Target = targetPoint
+        Speed = speed
+    }
 let loadBaseAnimation () = 
     let animation = 
         [| "resources/startButton.png";  |]
         |> fun frames -> loadAnimation frames 10
-    Map.add "Attack" animation Map.empty
+    Map.add "base" animation Map.empty
 
 let toBool (x: CBool) : bool = x = CBool.op_Implicit true
 
@@ -59,6 +91,7 @@ let followingCamera (camera: Camera) (gameObject: GameObject) dSpeed =
     }
 
     newCamera
+    
 
 let handleEvents character Ilist =
     List.fold (fun acc item -> 
@@ -69,42 +102,53 @@ let handleEvents character Ilist =
             | KeyboardKey.A -> {acc with IsWalkingLeft = true}
             | KeyboardKey.D -> {acc with IsWalkingRight = true}
             | _ -> acc
+        | MouseClick(x, y, button) -> 
+            { acc with IsAttacking = (true, newPoint x y 0.0f) }
         | _ -> acc) character Ilist 
 
-let makePlayerWalkRight  character player = 
+let makePlayerWalkRight character player = 
     if character.IsWalkingRight then {player with PhysicalObject = {player.PhysicalObject with speed={X = 1000.0; Y = player.PhysicalObject.speed.Y; }}; GraphicObject = setMirroredByHorizontal player.GraphicObject true}
     else player
-let makePlayerWalkLeft  character player = 
+let makePlayerWalkLeft character player = 
     if character.IsWalkingLeft then {player with PhysicalObject = {player.PhysicalObject with speed={X = -1000.0; Y = player.PhysicalObject.speed.Y; }}; GraphicObject = setMirroredByHorizontal player.GraphicObject false}
     else player
 
+let makePlayerAttack character player attacks = 
+    let isAttacking, point = character.IsAttacking 
+    if not isAttacking then attacks
+    else
+        List.append attacks [spawnAttack (getPointOfGraphicObject player.GraphicObject) point 100 100 (Map.add "default" AttackAnimation Map.empty) "default" 10000 0.05f]
 let makePlayerJump  character player = 
     if character.IsJumping && not character.IsInAir then {player with PhysicalObject = {player.PhysicalObject with speed={X = player.PhysicalObject.speed.X; Y = -1000}}}
     else player
-let makePlayerMove player character= 
+let makePlayerMove player character attacks = 
     let player = makePlayerWalkRight character player |> makePlayerWalkLeft character |> makePlayerJump character
+    let attacks = makePlayerAttack character player attacks
     let hasStoppedRunning = abs player.PhysicalObject.speed.X < 0.2 && getCurrentAnimation player.GraphicObject = "Run"
     let hasStartedRunning = abs player.PhysicalObject.speed.X > 0.2 && getCurrentAnimation player.GraphicObject = "Standing"
-    if hasStoppedRunning then { player with GraphicObject = changeGameObjectAnimation player.GraphicObject "Standing" }
-    else if hasStartedRunning then {player with GraphicObject = changeGameObjectAnimation player.GraphicObject "Run" }
-    else player
+    if hasStoppedRunning then { player with GraphicObject = changeGameObjectAnimation player.GraphicObject "Standing" }, attacks
+    else if hasStartedRunning then {player with GraphicObject = changeGameObjectAnimation player.GraphicObject "Run" }, attacks
+    else player, attacks
     
 
 let rec doFrame gameState =
     
     //drawGraphicObject sprite camera
-    let bodies = nextFrame gameState.GameObjects (1.0/float gameState.FpsCount) gameState.Camera
+    let attacksGameObjs = gameState.Attacks |> List.map (fun x -> x.GameObject)
+    let bodies = nextFrame (List.concat [gameState.GameObjects; attacksGameObjs]) (1.0/float gameState.FpsCount) gameState.Camera
     let player = Option.get (List.tryFind (fun x -> x.PhysicalObject.name = "Player") bodies)
+    let attacks = gameState.Attacks
     let character = {
         IsWalkingLeft = false
         IsWalkingRight = false
         IsJumping = false
         IsInAir = if player.PhysicalObject.state=InAir then true else false
+        IsAttacking = (false, newPoint 0 0 0.0f)
     }
     let newCharacter = gameState.InputHandler.CollectEvents() |> handleEvents character
-    let newPlayer = makePlayerMove player newCharacter
+    let (newPlayer: GameObject, attacks) = makePlayerMove player newCharacter attacks
     let camera = followingCamera gameState.Camera player 0.0001f
-    {gameState with GameObjects = bodies |> List.map(fun x -> if x.PhysicalObject.name="Player" then newPlayer else x); Camera = camera}
+    {gameState with GameObjects = bodies |> List.map(fun x -> if x.PhysicalObject.name="Player" then newPlayer else x); Camera = camera; Attacks = attacks |> List.map continueAttack |> List.filter (fun d -> not (attackHasCame d))}
 
 
     //Raylib.DrawText("Sprite Animation Demo", 10, 10, 20, Color.Black)
@@ -164,6 +208,7 @@ let main argv =
         Camera = camera
         GameObjects = [downloadBackground ()]
         InputHandler = InputHandler
+        Attacks = List.empty
     }
     
 

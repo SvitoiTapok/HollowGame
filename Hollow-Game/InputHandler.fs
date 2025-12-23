@@ -15,6 +15,7 @@ type Character = {
     IsWalkingRight: bool
     IsInAir: bool
     IsJumping: bool
+    IsAttacking: bool * Point
 }
 let toBool (x: CBool) : bool = x = CBool.op_Implicit true
 

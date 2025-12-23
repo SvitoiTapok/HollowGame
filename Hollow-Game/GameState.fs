@@ -4,6 +4,15 @@ open Animation
 open MainLoop
 open InputHandler
 
+type Attack = {
+    GameObject: GameObject
+    Target: Point
+    Speed: single
+}
+
+let AttackAnimation = [| "resources/kust.png" |] |> fun frames -> loadAnimation frames 1
+        
+
 type GameMode =
     | Menu
     | MainLoop
@@ -18,4 +27,5 @@ type GameState = {
     Camera: Camera
     InputHandler: InputHandler
     GameObjects: GameObject list
+    Attacks: Attack list
 }
